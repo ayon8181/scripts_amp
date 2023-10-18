@@ -1,0 +1,7 @@
+period_bands:
+  - T017-050s
+
+raw_obsd_3D_crust_tag: obsd_3
+raw_synt_tag: synt
+proc_obsd_3D_crust_tag: proc_obsd_3
+proc_synt_tag: proc_synt

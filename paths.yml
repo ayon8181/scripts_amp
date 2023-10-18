@@ -1,0 +1,142 @@
+- input_data:
+    subfolders:
+      - sacdata:
+          path: "sacdata/{eventname}"
+          subfolders:
+            - synt_sac: "synt"
+            - obsd_glad_sac: "obsd_glad"
+      - staxml: "staxml/{eventname}"
+      - quakeml:
+          files:
+            - quakeml: "{eventname}.xml"
+
+- converter:
+    subfolders:
+      - converter_paths:
+          path: "paths"
+          files:
+            - obsd_glad_converter_path: "obsd_glad2asdf.{eventname}.path.json"
+            - synt_converter_path: "synt2asdf.{eventname}.path.json"
+
+- proc:
+    subfolders:
+      - proc_paths:
+          path: "paths"
+          files:
+            - obsd_3D_crust_proc_path: "proc_obsd_3D_crust.{eventname}.{period_band}.path.json"
+            - synt_proc_path: "proc_synt.{eventname}.{period_band}.path.json"
+
+- windows:
+    subfolders:
+      - window_paths:
+          path: "paths"
+          files:
+            - window_path: "windows.{eventname}.{period_band}.path.json"
+      - windows_output:
+          path: "output"
+          subfolders:
+            - win_event:
+                path: "{eventname}"
+                subfolders:
+                  - win_event_period:
+                      path: "{period_band}"
+                      files:
+                        - windows_file: "windows.json"
+                        - windows_filter_file: "windows.filter.json"
+
+- measure:
+    subfolders:
+      - measure_paths:
+          path: "paths"
+          files:
+            - measure_path: "measure.{eventname}.{period_band}.path.json"
+      - measure_figures: "figures"
+      - measure_output:
+          path: "output"
+          files:
+            - measure_file: "measure.{eventname}.{period_band}.json"
+
+- adjoint:
+    subfolders:
+      - adjoint_paths:
+          path: "paths"
+          files:
+            - adjoint_path: "adjoint.{eventname}.{period_band}.path.json"
+      - adjoint_figures: "figures"
+      - adjoint_output:
+          path: "output"
+          files:
+            - adjoint_file: "adjoint.{eventname}.{period_band}.h5"
+
+
+- stations:
+    subfolders:
+      - stations_paths:
+          path: "paths"
+          files:
+            - stations_path: "stations.{eventname}.path.json"
+      - stations_output:
+          path: "output"
+          files:
+            - stations_file: "{eventname}.json"
+
+- filter:
+    subfolders:
+      - filter_paths:
+          path: "paths"
+          files:
+            - filter_path: "filter.{eventname}.{period_band}.path.json"
+
+- weights:
+    subfolders:
+      - weight_params:
+          path: "parfile"
+          files:
+            - weight_template: "template.window_weights.param.yml"
+            - weight_parfile: "window_weights.{eventname}.param.yml"
+      - weight_paths:
+          path: "paths"
+          files:
+            - weight_path: "window_weights.{eventname}.path.json"
+      - weight_output:
+          path: "output"
+          subfolders:
+            - weight_event:
+                path: "{eventname}"
+                subfolders:
+                  - weight_log:
+                      path: "log"
+                      files:
+                        - weight_log: "weight.log"
+                files:
+                  - weight_file: "window_weights.{period_band}.json"
+
+- sum_adjoint:
+    subfolders:
+      - sum_adjoint_output:
+          path: "output"
+          files:
+            - sum_adjoint_file: "adjoint_sum.{eventname}.h5"
+      - sum_adjoint_paths:
+          path: "paths"
+          files:
+            - sum_adjoint_path: "adjoint_sum.{eventname}.path.json"
+
+- seis:
+    subfolders:
+      - raw_obsd_3D_crust:
+          path: "raw"
+          files:
+            - raw_obsd_3D_crust: "{eventname}.obsd_3D_crust.h5"
+      - raw_synt:
+          path: "raw"
+          files:
+            - raw_synt: "{eventname}.synt.h5"
+      - proc_obsd_3D_crust:
+          path: "proc"
+          files:
+            - proc_obsd_3D_crust: "{eventname}.{period_band}.proc_obsd_3D_crust.h5"
+      - proc_synt:
+          path: "proc"
+          files:
+            - proc_synt: "{eventname}.{period_band}.proc_synt.h5"
