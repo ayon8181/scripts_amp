@@ -9,14 +9,14 @@ from obspy.taup import TauPyModel
 import math
 import multiprocessing as mp
 
-file_names      = ["obsd_1D_crust", "obsd_3D_crust","obsd_glad"]
+file_names      = ["obsd_1D_crust", "obsd_3D_crust","obsd_glad","real_data"]
 df=[]
 plot_dir="/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/plots_map"
 model=TauPyModel(model="prem")
 for i,f in enumerate(file_names):
-    temp    = pd.read_csv("/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/"+f+".txt4",header=None,delimiter=" ",skipinitialspace=True)
+    temp    = pd.read_csv("/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/"+f+".txt",header=None,delimiter=" ",skipinitialspace=True)
     df.append(temp)
-
+max_cc        = [0.85,0.75,0.75,0.7]
 def points_S_ScS(evla, evlo, evdp, stla, stlo, model, phase_list):
 
     for j,p in enumerate(phase_list):
@@ -89,9 +89,10 @@ def points_Sdiff(evla,evlo,evdp,stla,stlo,model=model):
         for i,pts in enumerate(path):
             if pts[3]==2190:
                 mid.append([pts[5],pts[4]])
-        mid=mid[int(len(mid)/2)] 
-        end=[path[int(len(path)*2/3)][5],path[int(len(path)*2/3)][4]]
-        return [start,mid,end]
+        if len(mid)>0:
+           mid=mid[int(len(mid)/2)] 
+           end=[path[int(len(path)*2/3)][5],path[int(len(path)*2/3)][4]]
+           return [start,mid,end]
                      
                         
                   
@@ -100,174 +101,325 @@ def points_Sdiff(evla,evlo,evdp,stla,stlo,model=model):
 phase_list=['S','SS','SSS','ScS','Sdiff']
 for k,ph in enumerate(phase_list):
     for i,dfs in enumerate(df):
-        df_plot = dfs[(dfs[23+k*5+1]>0.85) & (np.abs((dfs[23+k*5+2])<15))]
-        df_plot = df_plot[df_plot[23+k*5+3] == df_plot[23+k*5+3]]
+        df_plot = dfs[(dfs[16+k*5+1]>max_cc[i]) & (np.abs((dfs[16+k*5+2])<15))]
+        df_plot = df_plot[df_plot[16+k*5+3] == df_plot[16+k*5+3]]
         if k==0:
-           df_plot = df_plot[(df_plot[6]>30) & (df_plot[6]<70)]#['0','1','2','3','4',str(23+k*5+3),str(23+k*5+4),str(23+k*5+2)]
+           df_plot = df_plot[(df_plot[7]>30) & (df_plot[7]<70)]#['0','1','2','3','4',str(16+k*5+3),str(16+k*5+4),str(16+k*5+2)]
            pool = mp.Pool(int(os.environ['SLURM_CPUS_PER_TASK']))
-           results=pool.starmap(points_S_ScS, [(rows[2],rows[1],rows[3],rows[5],rows[4],model,['S'])  for i,rows in df_plot.iterrows()])
+           results=pool.starmap(points_S_ScS, [(rows[3],rows[2],rows[4],rows[6],rows[5],model,['S'])  for i,rows in df_plot.iterrows()])
            pool.close()
            pool.join()
-           start=[]
+           start_lat=[]
+           start_lon=[]
            mid_lat=[]
            mid_lon=[]
-           end=[]
+           end_lat=[]
+           end_lon=[]
            for r in results:
                if r is not None:
-                  start.append(r[0]+r[1])
+                  start_lon.append(r[0][0])
+                  start_lat.append(r[0][1])
                   mid_lat.append(r[1][1])
                   mid_lon.append(r[1][0])
-                  end.append(r[1]+r[2])
+                  end_lon.append(r[2][0])
+                  end_lat.append(r[2][1])
                   
                else:
-                    start.append(np.nan)
-                    
+                    start_lat.append([np.nan,np.nan])
+                    start_lon.append([np.nan,np.nan])
                     mid_lat.append(np.nan)
                     mid_lon.append(np.nan)
-                    end.append(np.nan)
+                    end_lat.append([np.nan,np.nan])
+                    end_lon.append([np.nan,np.nan])
                     
-           df_plot['start'] = start
+           df_plot['start_lat'] = start_lat
+           df_plot['start_lon'] = start_lon
            df_plot['mid_lon']   = mid_lon
            df_plot['mid_lat']   = mid_lat
-           df_plot['end']   = end
+           df_plot['end_lat']   = end_lat
+           df_plot['end_lon']   = end_lon
         elif k==1:
-           df_plot = df_plot[(df_plot[6]>50) & (df_plot[6]<140)]
+           df_plot = df_plot[(df_plot[7]>50) & (df_plot[7]<140)]
            pool = mp.Pool(int(os.environ['SLURM_CPUS_PER_TASK']))
-           results=pool.starmap(points_SS, [(rows[2],rows[1],rows[3],rows[5],rows[4],model)  for i,rows in df_plot.iterrows()])
+           results=pool.starmap(points_SS, [(rows[3],rows[2],rows[4],rows[6],rows[5],model)  for i,rows in df_plot.iterrows()])
            pool.close()
            pool.join()
-           start=[]
+           start_lat=[]
+           start_lon=[]
            mid_lat=[]
            mid_lon=[]
-           end=[]
+           end_lat=[]
+           end_lon=[]
            for r in results:
                if r is not None:
-                  start.append(r[0]+r[1])
+                  start_lon.append(r[0][0])
+                  start_lat.append(r[0][1])
                   mid_lat.append(r[1][1])
                   mid_lon.append(r[1][0])
-                  end.append(r[1]+r[2])
+                  end_lon.append(r[2][0])
+                  end_lat.append(r[2][1])
                   
                else:
-                    start.append(np.nan)
-                    
+                    start_lat.append([np.nan,np.nan])
+                    start_lon.append([np.nan,np.nan])
                     mid_lat.append(np.nan)
                     mid_lon.append(np.nan)
-                    end.append(np.nan)
+                    end_lat.append([np.nan,np.nan])
+                    end_lon.append([np.nan,np.nan])
                     
-           df_plot['start'] = start
+           df_plot['start_lat'] = start_lat
+           df_plot['start_lon'] = start_lon
            df_plot['mid_lon']   = mid_lon
            df_plot['mid_lat']   = mid_lat
-           df_plot['end']   = end
+           df_plot['end_lat']   = end_lat
+           df_plot['end_lon']   = end_lon
         elif k==2:
-           df_plot = df_plot[((df_plot[6]>75) & (df_plot[6]<110)) | ((df_plot[6]>110) & (df_plot[6]<165))]#['0','1','2','3','4',str(23+k*5+3),str(23+k*5+4),str(23+k*5+2)]
+           df_plot = df_plot[((df_plot[7]>75) & (df_plot[7]<110)) | ((df_plot[7]>110) & (df_plot[7]<165))]#['0','1','2','3','4',str(16+k*5+3),str(16+k*5+4),str(16+k*5+2)]
            pool = mp.Pool(int(os.environ['SLURM_CPUS_PER_TASK']))
-           results=pool.starmap(points_SSS, [(rows[2],rows[1],rows[3],rows[5],rows[4],model)  for i,rows in df_plot.iterrows()])
+           results=pool.starmap(points_SSS, [(rows[3],rows[2],rows[4],rows[6],rows[5],model)  for i,rows in df_plot.iterrows()])
            pool.close()
            pool.join()
-           start=[]
+           start_lat=[]
+           start_lon=[]
            mid_lat=[]
            mid_lon=[]
-           end=[]
+           end_lat=[]
+           end_lon=[]
            for r in results:
                if r is not None:
-                  start.append(r[0]+r[1])
+                  start_lon.append(r[0][0])
+                  start_lat.append(r[0][1])
                   mid_lat.append(r[1][1])
                   mid_lon.append(r[1][0])
-                  end.append(r[1]+r[2])
+                  end_lon.append(r[2][0])
+                  end_lat.append(r[2][1])
                   
                else:
-                    start.append(np.nan)
-                    
+                    start_lat.append([np.nan,np.nan])
+                    start_lon.append([np.nan,np.nan])
                     mid_lat.append(np.nan)
                     mid_lon.append(np.nan)
-                    end.append(np.nan)
+                    end_lat.append([np.nan,np.nan])
+                    end_lon.append([np.nan,np.nan])
                     
-           df_plot['start'] = start
+           df_plot['start_lat'] = start_lat
+           df_plot['start_lon'] = start_lon
            df_plot['mid_lon']   = mid_lon
            df_plot['mid_lat']   = mid_lat
-           df_plot['end']   = end
+           df_plot['end_lat']   = end_lat
+           df_plot['end_lon']   = end_lon
         elif k==3:
-           df_plot = df_plot[((df_plot[6]>5) & (df_plot[6]<25)) | ((df_plot[6]>50) & (df_plot[6]<65)) ]#['0','1','2','3','4',str(23+k*5+3),str(23+k*5+4),str(23+k*5+2)]
+           df_plot = df_plot[((df_plot[7]>5) & (df_plot[7]<25)) | ((df_plot[7]>50) & (df_plot[7]<65)) ]#['0','1','2','3','4',str(16+k*5+3),str(16+k*5+4),str(16+k*5+2)]
            pool = mp.Pool(int(os.environ['SLURM_CPUS_PER_TASK']))
-           results=pool.starmap(points_S_ScS, [(rows[2],rows[1],rows[3],rows[5],rows[4],model,['ScS'])  for i,rows in df_plot.iterrows()])
+           results=pool.starmap(points_S_ScS, [(rows[3],rows[2],rows[4],rows[6],rows[5],model,['ScS'])  for i,rows in df_plot.iterrows()])
            pool.close()
            pool.join()
-           start=[]
+           start_lat=[]
+           start_lon=[]
            mid_lat=[]
            mid_lon=[]
-           end=[]
+           end_lat=[]
+           end_lon=[]
            for r in results:
                if r is not None:
-                  start.append(r[0]+r[1])
+                  start_lon.append(r[0][0])
+                  start_lat.append(r[0][1])
                   mid_lat.append(r[1][1])
                   mid_lon.append(r[1][0])
-                  end.append(r[1]+r[2])
+                  end_lon.append(r[2][0])
+                  end_lat.append(r[2][1])
                   
                else:
-                    start.append(np.nan)
-                    
+                    start_lat.append([np.nan,np.nan])
+                    start_lon.append([np.nan,np.nan])
                     mid_lat.append(np.nan)
                     mid_lon.append(np.nan)
-                    end.append(np.nan)
+                    end_lat.append([np.nan,np.nan])
+                    end_lon.append([np.nan,np.nan])
                     
-           df_plot['start'] = start
+           df_plot['start_lat'] = start_lat
+           df_plot['start_lon'] = start_lon
            df_plot['mid_lon']   = mid_lon
            df_plot['mid_lat']   = mid_lat
-           df_plot['end']   = end
+           df_plot['end_lat']   = end_lat
+           df_plot['end_lon']   = end_lon
         elif k==4:
-           df_plot = df_plot[(df_plot[6]>100) & (df_plot[6]<150)]['0','1','2','3','4',str(23+k*5+3),str(23+k*5+4),str(23+k*5+2)]
+           df_plot = df_plot[(df_plot[7]>100) & (df_plot[7]<150)]
            pool = mp.Pool(int(os.environ['SLURM_CPUS_PER_TASK']))
-           results=pool.starmap(points_Sdiff, [(rows[2],rows[1],rows[3],rows[5],rows[4],model)  for i,rows in df_plot.iterrows()])
+           results=pool.starmap(points_Sdiff, [(rows[3],rows[2],rows[4],rows[6],rows[5],model)  for i,rows in df_plot.iterrows()])
            pool.close()
            pool.join()
-           start=[]
+           start_lat=[]
+           start_lon=[]
            mid_lat=[]
            mid_lon=[]
-           end=[]
+           end_lat=[]
+           end_lon=[]
            for r in results:
                if r is not None:
-                  start.append(r[0]+r[1])
+                  start_lon.append(r[0][0])
+                  start_lat.append(r[0][1])
                   mid_lat.append(r[1][1])
                   mid_lon.append(r[1][0])
-                  end.append(r[1]+r[2])
+                  end_lon.append(r[2][0])
+                  end_lat.append(r[2][1])
                   
                else:
-                    start.append(np.nan)
-                    
+                    start_lat.append([np.nan,np.nan])
+                    start_lon.append([np.nan,np.nan])
                     mid_lat.append(np.nan)
                     mid_lon.append(np.nan)
-                    end.append(np.nan)
+                    end_lat.append([np.nan,np.nan])
+                    end_lon.append([np.nan,np.nan])
                     
-           df_plot['start'] = start
+           df_plot['start_lat'] = start_lat
+           df_plot['start_lon'] = start_lon
            df_plot['mid_lon']   = mid_lon
            df_plot['mid_lat']   = mid_lat
-           df_plot['end']   = end
-        print(df_plot)
+           df_plot['end_lat']   = end_lat
+           df_plot['end_lon']   = end_lon
+
+        print(df_plot[["start_lon","start_lat","mid_lon","mid_lat"]])
+
+        
+
+
         fig=pygmt.Figure()
         pygmt.makecpt(cmap='polar',reverse=True,series=[-1.5,1.5]) 
         fig.basemap(region="d",projection="N-150/12c")
-        fig.coast(shorelines=True, frame=True)   
-        fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.05c",fill=np.log(df_plot[23+k*5+3]),cmap=True,transparency=40)
-        #fig.plot(data=df_plot.start,style="=0.0c",pen="1p,+z",zvalue=df_plot[23+k*5+3],cmap=True,transparency=40)            
-        #fig.plot(data=df_plot.end,style="=0.0c",pen="1p,+z",zvalue=df_plot[23+k*5+3],cmap=True,transparency=40)
+           
+        
+        #fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.001p,+z",transparency=40)#zvalue=df_plot[16+k*5+3],cmap=True,            
+        #fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.001p,+z",transparency=40)#zvalue=df_plot[16+k*5+3],cmap=True,transparency=40)
+        fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.1c",fill=np.log(df_plot[16+k*5+3]),cmap=True,transparency=40)
+        fig.coast(shorelines=True, frame=True)
         fig.colorbar()
-        fig.savefig(plot_dir+"/global_amp"+file_names[i]+"_"+ph+".png")
+        fig.savefig(plot_dir+"/global_amp_"+file_names[i]+"_"+ph+".png")
         plt.close()
+
+
+        fig=pygmt.Figure()
         pygmt.makecpt(cmap='polar',reverse=True,series=[-1.5,1.5]) 
         fig.basemap(region="d",projection="N-150/12c")
-        fig.coast(shorelines=True, frame=True)   
-        fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.05c",fill=np.log(df_plot[23+k*5+4]),cmap=True,transparency=40)
-        #fig.plot(data=df_plot.start,style="=0.0c",pen="1p,+z",zvalue=df_plot[23+k*5+4],cmap=True,transparency=40)            
-        #fig.plot(data=df_plot.end,style="=0.0c",pen="1p,+z",zvalue=df_plot[23+k*5+4],cmap=True,transparency=40)
+        #fig.coast(shorelines=True, frame=True)   
+        
+        #fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.001p,+z",transparency=40)#zvalue=df_plot[16+k*5+4],cmap=True,transparency=40)            
+        #fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.001p,+z",transparency=40)#zvalue=df_plot[16+k*5+4],cmap=True,transparency=40)
+        fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.05c",fill=np.log(df_plot[16+k*5+4]),cmap=True,transparency=40)
+        fig.coast(shorelines=True, frame=True)
         fig.colorbar()
-        fig.savefig(plot_dir+"/global_env"+file_names[i]+"_"+ph+".png")
+        fig.savefig(plot_dir+"/global_env_"+file_names[i]+"_"+ph+".png")
         plt.close()
+
+
+
+        fig=pygmt.Figure()
         pygmt.makecpt(cmap='polar',reverse=True,series=[-10,10]) 
         fig.basemap(region="d",projection="N-150/12c")
-        fig.coast(shorelines=True, frame=True)   
-        fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.05c",fill=df_plot[23+k*5+2],cmap=True,transparency=40)
-        #fig.plot(data=df_plot.start,style="=0.0c",pen="1p,+z",zvalue=df_plot[23+k*5+2],cmap=True,transparency=40)            
-        #fig.plot(data=df_plot.end,style="=0.0c",pen="1p,+z",zvalue=df_plot[23+k*5+2],cmap=True,transparency=40)
+        #fig.coast(shorelines=True, frame=True)   
+        
+        #fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.001p,+z",transparency=40)#zvalue=df_plot[16+k*5+2],cmap=True,transparency=40)            
+        #fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.001p,+z",transparency=40)#zvalue=df_plot[16+k*5+2],cmap=True,transparency=40)
+        fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.05c",fill=df_plot[16+k*5+2],cmap=True,transparency=40)
+        fig.coast(shorelines=True, frame=True)
         fig.colorbar()
-        fig.savefig(plot_dir+"/global_time"+file_names[i]+"_"+ph+".png")
-        plt.close
+        fig.savefig(plot_dir+"/global_time_"+file_names[i]+"_"+ph+".png")
+        plt.close()
+
+for i,dfs in enumerate(df):
+    df_plot = dfs[(dfs[18]>max_cc[i]) & (dfs[23]>max_cc[i]) & (np.abs(dfs[19]<15)) & (np.abs(dfs[24]<15))]
+    df_plot = df_plot[df_plot[8] == df_plot[8]]
+    df_plot = df_plot[(df_plot[7]>50) & (df_plot[7]<140)]
+    pool = mp.Pool(int(os.environ['SLURM_CPUS_PER_TASK']))
+    results=pool.starmap(points_SS, [(rows[3],rows[2],rows[4],rows[6],rows[5],model)  for i,rows in df_plot.iterrows()])
+    pool.close()
+    pool.join()
+    start_lat=[]
+    start_lon=[]
+    mid_lat=[]
+    mid_lon=[]
+    end_lat=[]
+    end_lon=[]
+    for r in results:
+        if r is not None:
+            start_lon.append(r[0][0])
+            start_lat.append(r[0][1])
+            mid_lat.append(r[1][1])
+            mid_lon.append(r[1][0])
+            end_lon.append(r[2][0])
+            end_lat.append(r[2][1])
+            
+        else:
+            start_lat.append([np.nan,np.nan])
+            start_lon.append([np.nan,np.nan])
+            mid_lat.append(np.nan)
+            mid_lon.append(np.nan)
+            end_lat.append([np.nan,np.nan])
+            end_lon.append([np.nan,np.nan])
+            
+    df_plot['start_lat'] = start_lat
+    df_plot['start_lon'] = start_lon
+    df_plot['mid_lon']   = mid_lon
+    df_plot['mid_lat']   = mid_lat
+    df_plot['end_lat']   = end_lat
+    df_plot['end_lon']   = end_lon
+    fig=pygmt.Figure()
+    pygmt.makecpt(cmap='polar',reverse=True,series=[-1.5,1.5]) 
+    fig.basemap(region="d",projection="N-150/12c")
+    #fig.coast(shorelines=True, frame=True)   
+    
+    #fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.001p,+z",transparency=40)#zvalue=df_plot[16+k*5+3],cmap=True,            
+    #fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.001p,+z",transparency=40)#zvalue=df_plot[16+k*5+3],cmap=True,transparency=40)
+    fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.1c",fill=np.log(df_plot[8]),cmap=True,transparency=40)
+    fig.coast(shorelines=True, frame=True)
+    fig.colorbar()
+    fig.savefig(plot_dir+"/SS_S_"+file_names[i]+".png")
+    plt.close()
+    df_plot = dfs[(dfs[28]>max_cc[i]) & (dfs[23]>max_cc[i]) & (np.abs(dfs[29]<15)) & (np.abs(dfs[24]<15))]
+    df_plot = df_plot[df_plot[10] == df_plot[10]]
+    df_plot = df_plot[(((df_plot[7]>75) & (df_plot[7]<110)) | ((df_plot[7]>110) & (df_plot[7]<140)))]
+    pool = mp.Pool(int(os.environ['SLURM_CPUS_PER_TASK']))
+    results=pool.starmap(points_SS, [(rows[3],rows[2],rows[4],rows[6],rows[5],model)  for i,rows in df_plot.iterrows()])
+    pool.close()
+    pool.join()
+    start_lat=[]
+    start_lon=[]
+    mid_lat=[]
+    mid_lon=[]
+    end_lat=[]
+    end_lon=[]
+    for r in results:
+        if r is not None:
+            start_lon.append(r[0][0])
+            start_lat.append(r[0][1])
+            mid_lat.append(r[1][1])
+            mid_lon.append(r[1][0])
+            end_lon.append(r[2][0])
+            end_lat.append(r[2][1])
+            
+        else:
+            start_lat.append([np.nan,np.nan])
+            start_lon.append([np.nan,np.nan])
+            mid_lat.append(np.nan)
+            mid_lon.append(np.nan)
+            end_lat.append([np.nan,np.nan])
+            end_lon.append([np.nan,np.nan])
+            
+    df_plot['start_lat'] = start_lat
+    df_plot['start_lon'] = start_lon
+    df_plot['mid_lon']   = mid_lon
+    df_plot['mid_lat']   = mid_lat
+    df_plot['end_lat']   = end_lat
+    df_plot['end_lon']   = end_lon
+    fig=pygmt.Figure()
+    pygmt.makecpt(cmap='polar',reverse=True,series=[-1.5,1.5]) 
+    fig.basemap(region="d",projection="N-150/12c")
+    #fig.coast(shorelines=True, frame=True)   
+    
+    #fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.001p,+z",transparency=40)#zvalue=df_plot[16+k*5+3],cmap=True,            
+    #fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.001p,+z",transparency=40)#zvalue=df_plot[16+k*5+3],cmap=True,transparency=40)
+    fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.1c",fill=np.log(df_plot[10]),cmap=True,transparency=40)
+    fig.coast(shorelines=True, frame=True)
+    fig.colorbar()
+    fig.savefig(plot_dir+"/SSS_SS_"+file_names[i]+".png")
+    plt.close()

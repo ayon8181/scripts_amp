@@ -12,11 +12,81 @@ from pyasdf import ASDFDataSet
 import time
 import sys
 import math
+
 import csv
 
 event       = str(sys.argv[1])
 obsd_tag    = str(sys.argv[2])
 obsd_fname  = str(sys.argv[3])
+
+def percent_ocean(a,o_depth):
+    pts = len(a)
+    o=0
+    c=0
+    for j in a:
+        if j > o_depth:
+            o+=1
+        else:
+             c+=1
+    return (o/pts)
+
+def get_mid(evlat, evlon, stlat, stlon):
+    import pygmt
+    "Give npts to be odd number"
+    points      = pygmt.project(center=[evlon,evlat], endpoint=[stlon,stlat], generate=2)
+    npts        = len(points)
+    lon         = points.r.to_numpy()
+    lat         = points.s.to_numpy()
+    if npts>6:
+        moho        = {}
+        with open("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/depthtomoho.xyz",'r') as txt:
+            data = csv.reader(txt, skipinitialspace=True, delimiter=" ")
+            for row in data:
+                lats   = math.floor(float(row[1]))
+                lons   = math.floor(float(row[0]))
+                if lats not in moho.keys():
+                   moho[lats] = {}
+                moho[lats][lons] = float(row[2])   
+                
+        moho_depths = np.zeros(npts)
+        for j in range(npts):
+            moho_depths[j] = moho[math.floor(lat[j])][math.floor(lon[j])]
+        
+        if npts%2 == 0:
+            npts=npts-1
+            mid_ind = int((npts-1)/2.0)
+            moho_mid    = moho[math.floor(lat[mid_ind])][math.floor(lon[mid_ind])]    
+            mid_point   = [lon[mid_ind], lat[mid_ind]]
+            end_points  = [lon[mid_ind-1], lat[mid_ind-1], lon[mid_ind+1], lat[mid_ind+1]]
+            pygmt.clib.Session.destroy
+            return [mid_point, end_points, moho_mid,percent_ocean(moho_depths,-24)]
+        
+        else:
+            npts=npts-1
+            mid_ind_1 = int((npts/2.0))-1
+            mid_ind_2 = mid_ind_1+1
+
+            temp      = pygmt.project(center=[lon[mid_ind_1],lat[mid_ind_1]], endpoint=[lon[mid_ind_2],lat[mid_ind_2]], generate=1)
+            temp_lon  = temp.r.to_numpy()
+            temp_lat  = temp.s.to_numpy()
+            mid_point = [temp_lon[1],temp_lat[1]]
+            moho_mid  = moho[math.floor(temp_lat[1])][math.floor(temp_lon[1])]
+
+            temp      = pygmt.project(center=[lon[mid_ind_1-1],lat[mid_ind_1-1]], endpoint=[lon[mid_ind_1],lat[mid_ind_1]], generate=1)
+            temp_lon  = temp.r.to_numpy()
+            temp_lat  = temp.s.to_numpy()
+            end_point_s= [temp_lon[1],temp_lat[1]]
+            temp      = pygmt.project(center=[lon[mid_ind_2],lat[mid_ind_2]], endpoint=[lon[mid_ind_2+1],lat[mid_ind_2+1]], generate=1)
+            temp_lon  = temp.r.to_numpy()
+            temp_lat  = temp.s.to_numpy()
+            end_point_e= [temp_lon[1],temp_lat[1]]
+            end_points = [end_point_s[0], end_point_s[1],end_point_e[0], end_point_e[1]]
+            pygmt.clib.Session.destroy
+            return [mid_point, end_points, moho_mid, percent_ocean(moho_depths,-24) ]
+    else:
+         pygmt.clib.Session.destroy
+         return[np.nan,np.nan,np.nan,np.nan]
+
 
 
 def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag):                 #event_loc=[evla,evlo,evdp]
@@ -41,14 +111,23 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag):           
     evla   = event_loc[0]
     evlo   = event_loc[1]
     evdp   = event_loc[2]
+
+    points = get_mid(evla,evlo,stla,stlo)
+    midpoints = points[0]
+    endpoints = points[1]
+    moho_mid  = points[2]
+    moho_depths = points[3]
     
 
     gcarc= locations2degrees(stla, stlo, evla, evlo)
     if gcarc >= 10:
     
         ## get the waveforms
-        obsd_data     = obsd.select(component="T")[0]
-        synt_data     = synt.select(component="T")[0]
+        try:
+            obsd_data     = obsd.select(component="T")[0]
+            synt_data     = synt.select(component="T")[0]
+        except IndexError:
+               return
         sampling_rate = synt_data.stats.sampling_rate
         dt            = synt_data.stats.delta
         obsd_anltc    = hilbert(obsd_data.data)
@@ -115,14 +194,13 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag):           
         SSS_ScS_error   = 0.5*(min(A1[2],A2[2])/max(A1[3],A2[3]) - max(A1[2],A2[2])/min(A1[3],A2[3]))
         SSS_Sdiff_error = 0.5*(min(A1[2],A2[2])/max(A1[4],A2[4]) - max(A1[2],A2[2])/min(A1[4],A2[4]))
 
-        output=[evlo, evla, evdp, stlo, stla, gcarc, SS_S, SS_S_error, SSS_SS, SSS_SS_error, SSS_ScS, SSS_ScS_error, SSS_Sdiff, SSS_Sdiff_error]
+        output=[evlo, evla, evdp, stlo, stla, gcarc, midpoints, endpoints, moho_mid, moho_depths,  SS_S, SS_S_error, SSS_SS, SSS_SS_error, SSS_ScS, SSS_ScS_error, SSS_Sdiff, SSS_Sdiff_error]
         for j,k in enumerate(phase_list):
-            output.append(arrival_times[j])
-            output.append(max_cc[j])
-            output.append(time_shifts[j])
-            output.append(amp_rat_3d1d[j])
-            output.append(env_rat_3d1d[j])
-            output.append(0.5*(A1[j]+A2[j]))
+            output.append(round(arrival_times[j],3))
+            output.append(round(max_cc[j],3))
+            output.append(round(time_shifts[j],3))
+            output.append(round(amp_rat_3d1d[j],3))
+            output.append(round(env_rat_3d1d[j],3))
         
         return output
 
@@ -132,7 +210,7 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag):           
 
 ds        = ASDFDataSet("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/proc/"+event+".T017-050s.proc_"+obsd_fname+".h5")
 ds2       = ASDFDataSet("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/proc/"+event+".T017-050s.proc_synt.h5")
-#print("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/proc/"+event+".T017-050s.proc_"+obsd_fname+".h5")
+
 
 evla      = ds.events[0].origins[0].latitude
 evlo      = ds.events[0].origins[0].longitude
@@ -172,12 +250,12 @@ b          = time.time
 
 if ds.mpi.rank == 0:
     #print(all_output)
-    with open("/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/"+obsd_fname+".txt2",'a') as txt:
+    with open("/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/"+obsd_fname+".txt3",'a') as txt:
         for k in all_output.keys():
             if all_output[k][0] is not None:
-                txt.write(event+" "+k+" ")
+                txt.write(k+" ")
                 for h in all_output[k][0]:
-                    txt.write(str(h)+" ")
+                         txt.write(str(h)+" ")
                 txt.write("\n")
 del ds
 del ds2    
