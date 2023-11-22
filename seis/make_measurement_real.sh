@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=make_measurement
+#SBATCH --job-name=make_measurement_real
 #SBATCH --account=EAR21003
 #SBATCH --exclusive
 #SBATCH --export=ALL
@@ -24,8 +24,8 @@ nproc=480
 
 for e in $events
 do
-    echo $e >> 1D_crust
-    ibrun -n $nproc python make_measurement.py ${e} obsd_1 obsd_1D_crust
+    echo $e >> real
+    ibrun -n $nproc python make_measurement.py ${e} real_data real_data
 done
 
 ENDTIME=$(date +%s)

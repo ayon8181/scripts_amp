@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=make_measurement_3
+#SBATCH --job-name=make_measurement_glad
 #SBATCH --account=EAR21003
 #SBATCH --exclusive
 #SBATCH --export=ALL
-#SBATCH --nodes=2
+#SBATCH --nodes=10
 #SBATCH --ntasks-per-node=48
-#SBATCH --time=02:00:00
+#SBATCH --time=01:00:00
 #SBATCH --partition=normal
 
 STARTTIME=$(date +%s)
@@ -24,12 +24,8 @@ nproc=480
 
 for e in $events
 do
-    ibrun -n $nproc python make_measurement.py ${e} obsd_3 obsd_3D_crust
-    echo ${e} Done........ >> events_done_3D
-    ibrun -n $nproc python make_measurement.py ${e} obsd_25 obsd_glad
-    echo ${e} Done........ >> events_done_glad
-    ibrun -n $nproc python make_measurement.py ${e} obsd_1 obsd_1D_crust
-    echo ${e} Done........ >> events_done_1D
+    echo $e >> glad
+    ibrun -n $nproc python make_measurement.py ${e} prem_3 prem_3D_crust
 done
 
 ENDTIME=$(date +%s)

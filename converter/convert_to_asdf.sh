@@ -5,7 +5,7 @@
 #SBATCH --export=ALL
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=56
-#SBATCH --time=03:00:00
+#SBATCH --time=00:20:00
 #SBATCH --partition=small
 
 STARTTIME=$(date +%s)
@@ -20,7 +20,7 @@ offset_value=1
 n_parallel_jobs=55
 p=all
 
-for f in paths/obsd_glad*.path.json
+for f in paths/synt_tr_iso*.path.json
 do
     ibrun -n $nproc -o $offset pypaw-convert_to_asdf -f $f -v -s &
     i=$((i+1))

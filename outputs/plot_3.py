@@ -11,15 +11,15 @@ import multiprocessing as mp
 
 file_names      = ["obsd_1D_crust", "obsd_3D_crust","obsd_glad","real_data"]
 df=[]
-plot_dir="/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/plots_deep"
+plot_dir="/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/plots_3"
 
 for i,f in enumerate(file_names):
     temp    = pd.read_csv("/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/"+f+".txt2",header=None,delimiter=" ",skipinitialspace=True)
-    temp=temp[temp[4]>=100]
+    #temp=temp[temp[4]>=100]
     df.append(temp)
 
 ocean_depth = -24
-max_cc        = [0.85,0.75,0.75,0.7]
+max_cc        = [0.0,0.0,0.0,0.0]
 max_tshift    = 15
 moho        = {}
 with open("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/depthtomoho.xyz",'r') as txt:
@@ -120,7 +120,7 @@ for k,ph in enumerate(phase_list[1:3]):
         #   plt.hist(np.log(df_plot[(df_plot[7]>30) & (df_plot[7]<70) & (df_plot[ph] == 0)][16+k*6+3]), bins=23, range=(-1.5,1.5), edgecolor='red', linewidth=1, linestyle='dashed',label="More Oceanic Crust than PREM",facecolor='orange', alpha = 0.5)
         #   plt.hist(np.log(df_plot[(df_plot[7]>30) & (df_plot[7]<70) & (df_plot[ph]  == 1)][16+k*6+3]), bins=23, range=(-1.5,1.5), edgecolor='blue', linewidth=1, linestyle='dashed',label="More Continental Crust than PREM",facecolor='blueviolet', alpha = 0.5)
         if k==0:
-           df_plot = dfs[(dfs[18]>max_cc[i]) & (dfs[23]>max_cc[i]) & (np.abs(dfs[19]<15)) & (np.abs(dfs[24]<15))]
+           df_plot = dfs
            df_plot = df_plot[df_plot[8] == df_plot[8]]
            plt.figure(1, figsize=[10,10])
            plt.hist(np.log(df_plot[(df_plot[7]>50) & (df_plot[7]<70)][8]), bins=23, range=(-1.5,1.5), edgecolor='blueviolet', linewidth=3, label="All Paths",facecolor='None')
@@ -132,7 +132,7 @@ for k,ph in enumerate(phase_list[1:3]):
            plt.savefig(plot_dir+"/Histogram_SS_S_"+labels[i]+".png")
            plt.close()
         elif k==1:
-           df_plot = dfs[(dfs[23]>max_cc[i]) & (dfs[28]>max_cc[i]) & (np.abs(dfs[24]<15)) & (np.abs(dfs[29]<15))]
+           #df_plot = dfs[(dfs[23]>max_cc[i]) & (dfs[28]>max_cc[i]) & (np.abs(dfs[24]<15)) & (np.abs(dfs[29]<15))]
            df_plot = df_plot[df_plot[10] == df_plot[10]]
            plt.figure(1, figsize=[10,10])
            plt.hist(np.log(df_plot[((df_plot[7]>75) & (df_plot[7]<110)) | ((df_plot[7]>110) & (df_plot[7]<140))][10]), bins=23, range=(-1.5,1.5), edgecolor='blueviolet', linewidth=4,label="All paths",facecolor='None')
@@ -160,7 +160,7 @@ for k,ph in enumerate(phase_list[1:3]):
 for k,ph in enumerate(phase_list):
     plt.figure(1,figsize=[10,10])
     for i,dfs in enumerate(df):
-        df_plot = dfs[(dfs[16+k*6+1]>max_cc[i]) & (np.abs((dfs[16+k*6+2])<15))]
+        df_plot = dfs
         df_plot = df_plot[df_plot[16+k*6+3] == df_plot[16+k*6+3]]
         if k==0:
            plt.hist(np.log(df_plot[(df_plot[7]>30) & (df_plot[7]<70)][16+k*6+3]), bins=23, range=(-1.5,1.5), edgecolor=colors[i], linewidth=lss[i],label=labels[i],facecolor=fccs[i], alpha = 0.5)
@@ -186,7 +186,7 @@ for k,ph in enumerate(phase_list):
 for k,ph in enumerate(phase_list):
     plt.figure(1, figsize=[10,10])
     for i,dfs in enumerate(df):
-        df_plot = dfs[(dfs[16+k*6+1]>max_cc[i]) & (np.abs((dfs[16+k*6+2])<15))]
+        df_plot = dfs
         df_plot = df_plot[df_plot[16+k*6+4] == df_plot[16+k*6+4]]
         if k==0:
            plt.hist(np.log(df_plot[(df_plot[7]>30) & (df_plot[7]<70)][16+k*6+4]), bins=23, range=(-1.5,1.5), edgecolor=colors[i], linewidth=lss[i],label=labels[i],facecolor=fccs[i], alpha = 0.5)
@@ -213,7 +213,7 @@ for k,ph in enumerate(phase_list):
 for k,ph in enumerate(phase_list):
     plt.figure(1, figsize=[10,10])
     for i,dfs in enumerate(df):
-        df_plot = dfs[(dfs[16+k*6+1]>max_cc[i]) & (np.abs((dfs[16+k*6+2])<15))]
+        df_plot = dfs
         df_plot = df_plot[df_plot[16+k*6+2] == df_plot[16+k*6+2]]
         if k==0:
            plt.hist(df_plot[(df_plot[7]>30) & (df_plot[7]<70)][16+k*6+2], bins=23, range=(-15,15), edgecolor=colors[i], linewidth=lss[i],label=labels[i],facecolor=fccs[i], alpha = 0.5)
@@ -240,7 +240,7 @@ for k,ph in enumerate(phase_list):
 for k,ph in enumerate(phase_list):
     plt.figure(1, figsize=[10,10])
     for i,dfs in enumerate(df):
-        df_plot = dfs[(dfs[16+k*6+1]>max_cc[i]) & (np.abs((dfs[16+k*6+2])<15))]
+        df_plot = dfs
         df_plot = df_plot[df_plot[16+k*6+5] == df_plot[16+k*6+5]]
         if k==0:
            plt.hist(np.log(df_plot[(df_plot[7]>30) & (df_plot[7]<70)][16+k*6+5]), bins=23, range=(-1.5,1.5), edgecolor=colors[i], linewidth=lss[i],label=labels[i],facecolor=fccs[i], alpha = 0.5)
@@ -302,7 +302,7 @@ for k,ph in enumerate(phase_list):
     
     for i,dfs in enumerate(df):
         plt.figure(1, figsize=[10,10])
-        df_plot = dfs[(dfs[16+k*6+1]>max_cc[i]) & (np.abs(dfs[16+k*6+2]<15))]
+        df_plot = dfs
         df_plot = df_plot[df_plot[16+k*6+3] == df_plot[16+k*6+3]]
         #if k==0:
         #   plt.hist(np.log(df_plot[(df_plot[7]>30) & (df_plot[7]<70)][16+k*6+3]), bins=23, range=(-1.5,1.5), edgecolor='black', linewidth=1, linestyle=lss[i],label=labels[i],facecolor='None')
@@ -342,7 +342,7 @@ for k,ph in enumerate(phase_list):
     
     for i,dfs in enumerate(df):
         plt.figure(1, figsize=[10,10])
-        df_plot = dfs[(dfs[16+k*6+1]>max_cc[i]) & (np.abs(dfs[16+k*6+2]<15))]
+        df_plot = dfs
         df_plot = df_plot[df_plot[16+k*6+5] == df_plot[16+k*6+5]]
         #if k==0:
         #   plt.hist(np.log(df_plot[(df_plot[7]>30) & (df_plot[7]<70)][16+k*6+3]), bins=23, range=(-1.5,1.5), edgecolor='black', linewidth=1, linestyle=lss[i],label=labels[i],facecolor='None')

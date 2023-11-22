@@ -5,7 +5,7 @@
 #SBATCH --export=ALL
 #SBATCH --nodes=10
 #SBATCH --ntasks-per-node=48
-#SBATCH --time=02:00:00
+#SBATCH --time=01:00:00
 #SBATCH --partition=normal
 
 STARTTIME=$(date +%s)
@@ -24,12 +24,8 @@ nproc=480
 
 for e in $events
 do
+    echo $e >> 3D_crust
     ibrun -n $nproc python make_measurement.py ${e} obsd_3 obsd_3D_crust
-    echo ${e} Done........ >> events_done_3D
-    ibrun -n $nproc python make_measurement.py ${e} obsd_25 obsd_glad
-    echo ${e} Done........ >> events_done_glad
-    ibrun -n $nproc python make_measurement.py ${e} obsd_1 obsd_1D_crust
-    echo ${e} Done........ >> events_done_1D
 done
 
 ENDTIME=$(date +%s)
