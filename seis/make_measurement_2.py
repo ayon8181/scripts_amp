@@ -13,7 +13,6 @@ import time
 import sys
 import math
 import csv
-from scipy import signal
 
 event       = str(sys.argv[1])
 obsd_tag    = str(sys.argv[2])
@@ -69,12 +68,8 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag):           
                     end_index    = int(arr_index+50*sampling_rate)
 
                     synt_wdow    = synt_data.data[start_index:end_index]
-                    taper_wdow   = signal.windows.tukey(len(synt_wdow),alpha=0.05)
-                    synt_wdow    = synt_wdow*taper_wdow
-                    en_synt_wdow = synt_envp[start_index:end_index]*taper_wdow
-                    obsd_cut     = obsd_data.data[int(start_index-25*sampling_rate):int(end_index+25*sampling_rate)]
-                    taper_o_wdow = signal.windows.tukey(len(obsd_cut),alpha=0.05)
-                    obsd_cut     = obsd_cut*taper_o_wdow
+                    en_synt_wdow = synt_envp[start_index:end_index]
+                    obsd_cut     = obsd_data.data[int(start_index-50*sampling_rate):int(end_index+50*sampling_rate)]
                     try:
                         cc           = correlate_template(obsd_cut,synt_wdow,mode="valid",normalize="full",method="auto")
                     except ValueError:
@@ -84,9 +79,7 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag):           
                     shift        = int(max_ind - int(len(cc)/2)-1)
                     time_shift   = shift/sampling_rate
                     obsd_wdow    = obsd_data[start_index+shift:end_index+shift]
-                    taper_o_wdow = signal.windows.tukey(len(obsd_wdow),alpha=0.05)
-                    obsd_wdow    = obsd_wdow*taper_o_wdow
-                    en_obsd_wdow = obsd_envp[start_index+shift:end_index+shift]*taper_o_wdow
+                    en_obsd_wdow = obsd_envp[start_index+shift:end_index+shift]
 
                     ## Make Measurements on the two windows
                     sqrd_obsd    = integrate.trapz(obsd_wdow*obsd_wdow, dx=dt)
@@ -141,7 +134,7 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag):           
 
 
 ds        = ASDFDataSet("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/proc/"+event+".T017-040s.proc_"+obsd_fname+".h5",mode="r")
-ds2       = ASDFDataSet("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/proc/"+event+".T017-040s.proc_synt.h5",mode="r")
+ds2       = ASDFDataSet("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/proc/"+event+".T017-040s.proc_real_data.h5",mode="r")
 #print("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/proc/"+event+".T017-050s.proc_"+obsd_fname+".h5")
 
 evla      = ds.events[0].origins[0].latitude
@@ -161,8 +154,8 @@ def process(this_station_group, other_station_group):
     
 
     stationxml = this_station_group.StationXML
-    observed   = this_station_group["proc_"+obsd_tag]
-    synthetic  = other_station_group.proc_synt
+    observed   = this_station_group.proc_real_data
+    synthetic  = other_station_group["proc_"+obsd_tag]
 
     all_results= []
 
@@ -175,14 +168,14 @@ def process(this_station_group, other_station_group):
 
 
 a          = time.time
-all_output = ds.process_two_files(ds2, process)
+all_output = ds2.process_two_files(ds, process)
 b          = time.time
 
 
 
 if ds.mpi.rank == 0:
     #print(all_output)
-    with open("/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/"+obsd_fname+".txt2",'a') as txt:
+    with open("/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/"+obsd_fname+"_w_real.txt4",'a') as txt:
         for k in all_output.keys():
             if all_output[k][0] is not None:
                 txt.write(event+" "+k+" ")
