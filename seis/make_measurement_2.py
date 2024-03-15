@@ -8,6 +8,7 @@ from obspy.taup import TauPyModel
 from obspy.geodetics import locations2degrees
 from obspy.signal.cross_correlation import correlate_template
 from obspy.imaging import beachball
+from obspy import Stream
 from scipy import fft
 from pyasdf import ASDFDataSet
 from geographiclib.geodesic import Geodesic
@@ -15,10 +16,13 @@ import time
 import sys
 import math
 import csv
-
-event       = str(sys.argv[1])
-obsd_tag    = str(sys.argv[2])
-obsd_fname  = str(sys.argv[3])
+if len(sys.argv) == 5:
+    event       = str(sys.argv[1])
+    obsd_tag    = str(sys.argv[2])
+    obsd_fname  = str(sys.argv[3])
+    f           = float(sys.argv[4])
+else:
+     print("Enter Input Information in the following order $event_name $asdf_tag $asdf_file $central_freq")
 
 def rad_pat_sh(rake,dip,az,st,tk_of):
     y = (np.cos(rake)*np.cos(dip)*np.cos(tk_of)*np.sin(az-st) +
@@ -57,8 +61,8 @@ def plane(nodal):
 def SNR(noise,data):
     n_rate    = noise[1]-noise[0]
     d_rate    = data[1]-data[0]
-    n_power   = integrate.trapezoid(noise**2,dx=n_rate)/(len(noise)*n_rate)
-    d_power   = integrate.trapezoid(data**2,dx=d_rate)/(len(d_power)*d_rate)
+    n_power   = integrate.trapezoid(noise*noise,dx=n_rate)/(len(noise)*n_rate)
+    d_power   = integrate.trapezoid(data*data,dx=d_rate)/(len(data)*d_rate)
     rat_power = d_power/n_power
 
     m_noise   = max(np.abs(noise))
@@ -68,7 +72,7 @@ def SNR(noise,data):
 
     return rat_power, rat_max
 
-def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_acc):                 #event_loc=[evla,evlo,evdp]
+def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_acc,f):                 #event_loc=[evla,evlo,evdp]
     """
     Error Code:
     1: Rejected as the station is on a nodal plane
@@ -82,6 +86,14 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
     4: Time Shift greater than 15 seconds
     5: Signal to Noise Ratio Fails for time_shift windows
     """
+    if f != 0:
+       f_min = 1/f-(1/f)*0.15
+       f_max = 1/f+(1/f)*0.15
+    elif f == 0:
+        f_min = 1/50.0
+        f_max = 1/20.0
+    
+
     model=TauPyModel(model="prem")
     #create output arrays
     max_cc       = np.full(len(phase_list),np.nan)
@@ -123,8 +135,12 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
     
         ## get the waveforms
         try:
+
             obsd_data     = obsd.select(component="T")[0]
             synt_data     = synt.select(component="T")[0]
+            
+            obsd_data     = obsd_data.filter("bandpass",freqmin=f_min,freqmax=f_max,corners=4,zerophase=True)
+            synt_data     = synt_data.filter("bandpass",freqmin=f_min,freqmax=f_max,corners=4,zerophase=True)
             sampling_rate = synt_data.stats.sampling_rate
             dt            = synt_data.stats.delta
             obsd_anltc    = hilbert(obsd_data.data)
@@ -135,6 +151,7 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
             
             
             arrival = model.get_travel_times(source_depth_in_km=evdp,distance_in_degree=gcarc,phase_list=["P"])
+            n_start_index=np.nan
             if len(arrival) != 0:
                arrival_time = arrival[0].time
 
@@ -150,13 +167,15 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
                     arr_index    = int(arrival_time*sampling_rate)
                     n_start_index= int(arr_index-125*sampling_rate)
                     n_end_index  = int(arr_index-25*sampling_rate)
+            if n_start_index!=n_start_index:
+                 return [3,name]
             
             o_noise  = obsd_data.data[n_start_index:n_end_index]
-            s_noisen = synt_data.data[n_start_index:n_end_index]
+            s_noise  = synt_data.data[n_start_index:n_end_index]
 
             ## Check Global Data Quality
 
-            g_i, g_m = SNR(o_noise,obsd_data)
+            g_i, g_m = SNR(o_noise,obsd_data.data)
 
             if g_i <= noise_acc[0] and g_m <= noise_acc[1]:
                
@@ -265,8 +284,8 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
 
 
 
-ds        = ASDFDataSet("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/proc/"+event+".T017-040s.proc_"+obsd_fname+".h5",mode="r")
-ds2       = ASDFDataSet("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/proc/"+event+".T017-040s.proc_real_data.h5",mode="r")
+ds        = ASDFDataSet("/scratch1/09038/ayon8181/scripts_amp/seis/proc/"+event+".T017-250s.proc_"+obsd_fname+".h5",mode="r")
+ds2       = ASDFDataSet("/scratch1/09038/ayon8181/scripts_amp/seis/proc/"+event+".T017-250s.proc_synt.h5",mode="r")
 
 noise_acc = [3.5,6.0,3,3]
 #print("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/proc/"+event+".T017-050s.proc_"+obsd_fname+".h5")
@@ -290,12 +309,12 @@ def process(this_station_group, other_station_group):
     
 
     stationxml = this_station_group.StationXML
-    observed   = this_station_group.proc_real_data
-    synthetic  = other_station_group["proc_"+obsd_tag]
+    observed   = this_station_group["proc_"+obsd_tag]
+    synthetic  = other_station_group.proc_synt
 
     all_results= []
 
-    results    = make_measure(observed,synthetic,stationxml,phase_list,evloc,obsd_tag,nod_p,noise_acc)
+    results    = make_measure(observed,synthetic,stationxml,phase_list,evloc,obsd_tag,nod_p,noise_acc,f)
 
 
     all_results.append(results)
@@ -304,18 +323,18 @@ def process(this_station_group, other_station_group):
 
 
 a          = time.time
-all_output = ds2.process_two_files(ds, process)
+all_output = ds.process_two_files(ds2, process)
 b          = time.time
 
 
 
 if ds.mpi.rank == 0:
     #print(all_output)
-    with open("/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/"+obsd_fname+"_real.txt",'a') as txt, \
-         open("/scratch1/09038/ayon8181/pypaw_workflow_test/errors/error_"+obsd_fname+"_phase.txt",'a') as txt2, \
-         open("/scratch1/09038/ayon8181/pypaw_workflow_test/errors/error_"+obsd_fname+"_all.txt",'a') as txt3:
+    with open("/scratch1/09038/ayon8181/scripts_amp/outputs/"+str(f)+"_"+obsd_fname+".txt",'a') as txt, \
+         open("/scratch1/09038/ayon8181/scripts_amp/errors/error_"+str(f)+"_"+obsd_fname+"_phase.txt",'a') as txt2, \
+         open("/scratch1/09038/ayon8181/scripts_amp/errors/error_"+str(f)+"_"+obsd_fname+"_all.txt",'a') as txt3:
         for k in all_output.keys():
-            if all_output[k][0][0] == 0:
+            if all_output[k][0] is not None and all_output[k][0][0] == 0 :
                 txt.write(event+" "+k+" ")
                 for h in all_output[k][0][2]:
                     txt.write(str(h)+" ")
@@ -323,12 +342,12 @@ if ds.mpi.rank == 0:
 
                 for j,error in enumerate(all_output[k][0][3]):
                     if error is not np.nan and error != 0:
-                        txt2.write(event+" "+all_output[k][0][1]+" "+phase_list[j]+" "+error+"\n")
+                        txt2.write(event+" "+str(all_output[k][0][1])+" "+phase_list[j]+" "+str(error)+"\n")
                 
 
-            elif all_output[k][0][0] != 0:
+            elif all_output[k][0] is not None and all_output[k][0][0] != 0:
                 
-                txt3.write(event+" "+all_output[k][0][1]+" "+all_output[k][0][0]+"/n")
+                txt3.write(event+" "+str(all_output[k][0][1])+" "+str(all_output[k][0][0])+"/n")
             
 del ds
 del ds2    
