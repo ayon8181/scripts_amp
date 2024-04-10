@@ -44,7 +44,7 @@ def nodal_plane_filter(event):
     np_1=[]
     for i in range(1,360):
         rp=np.abs(rad_pat_sh(np.deg2rad(rake),np.deg2rad(dip),np.deg2rad(i),np.deg2rad(strike),np.deg2rad(20.0)))
-        if rp<=0.001:
+        if rp<=0.0000000001:
            np_0.append(i)       
     return np_0
 
@@ -72,7 +72,9 @@ def SNR(noise,data):
 
     return rat_power, rat_max
 
-def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_acc,f):                 #event_loc=[evla,evlo,evdp]
+
+
+def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_acc,f,percent):                 #event_loc=[evla,evlo,evdp]
     """
     Error Code:
     1: Rejected as the station is on a nodal plane
@@ -92,6 +94,7 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
     elif f == 0:
         f_min = 1/50.0
         f_max = 1/20.0
+    
     
 
     model=TauPyModel(model="prem")
@@ -139,8 +142,8 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
             obsd_data     = obsd.select(component="T")[0]
             synt_data     = synt.select(component="T")[0]
             
-            obsd_data     = obsd_data.filter("bandpass",freqmin=f_min,freqmax=f_max,corners=4,zerophase=True)
-            synt_data     = synt_data.filter("bandpass",freqmin=f_min,freqmax=f_max,corners=4,zerophase=True)
+            obsd_data     = obsd_data.filter("bandpass",freqmin=f_min,freqmax=f_max,corners=6,zerophase=True)
+            synt_data     = synt_data.filter("bandpass",freqmin=f_min,freqmax=f_max,corners=6,zerophase=True)
             sampling_rate = synt_data.stats.sampling_rate
             dt            = synt_data.stats.delta
             obsd_anltc    = hilbert(obsd_data.data)
@@ -152,6 +155,7 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
             
             arrival = model.get_travel_times(source_depth_in_km=evdp,distance_in_degree=gcarc,phase_list=["P"])
             n_start_index=np.nan
+            #print(arrival)
             if len(arrival) != 0:
                arrival_time = arrival[0].time
 
@@ -184,18 +188,21 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
 
 
             for i,phase in enumerate(phase_list):
+                pt=percent[i]
+                t_bef = pt/f_max
+                t_aft = (1+pt)/f_max
                 arrivals = model.get_travel_times(source_depth_in_km=evdp,distance_in_degree=gcarc,phase_list=[phase])
                 if len(arrivals) != 0:
                     arrival_time = arrivals[0].time           #arrival_time in seconds
                 
                     ## Cut 100s windows central to the 
                     arr_index    = int(arrival_time*sampling_rate)
-                    start_index  = int(arr_index-50*sampling_rate)
-                    end_index    = int(arr_index+50*sampling_rate)
+                    start_index  = int(arr_index-t_bef*sampling_rate)
+                    end_index    = int(arr_index+t_aft*sampling_rate)
 
                     synt_wdow    = synt_data.data[start_index:end_index]
                     en_synt_wdow = synt_envp[start_index:end_index]
-                    obsd_cut     = obsd_data.data[int(start_index-50*sampling_rate):int(end_index+50*sampling_rate)]
+                    obsd_cut     = obsd_data.data[int(start_index-t_bef*sampling_rate):int(end_index+t_aft*sampling_rate)]
 
 
                     ## Filter Data on SNR
@@ -203,7 +210,8 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
                     if w_i <= noise_acc[2] and w_m <= noise_acc[3]:
                         success[i] = 2
                         continue 
-
+                    
+                    
                     ## Calculate cross-correlation co-efficients
                     try:
                         cc           = correlate_template(obsd_cut,synt_wdow,mode="valid",normalize="full",method="auto")
@@ -216,10 +224,10 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
                     time_shift   = shift/sampling_rate
 
                     ## Filter out based on cross-correlation value
-                    if np.abs(time_shift) >= 15:
+                    if np.abs(time_shift) >= 35:
                        success[i] = 4
                        continue
-
+                    #print(start_index,shift,end_index)
                     obsd_wdow    = obsd_data[start_index+shift:end_index+shift]
                     en_obsd_wdow = obsd_envp[start_index+shift:end_index+shift]
 
@@ -277,7 +285,7 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
                 output.append(0.5*(A1[j]+A2[j]))
             
             return [0,name,output,success]
-        except IndexError:
+        except ValueError:
                return [3,name]
 
 
@@ -295,6 +303,7 @@ evlo      = ds.events[0].origins[0].longitude
 evdp      = ds.events[0].origins[0].depth/1000.0
 evloc     = [evla,evlo,evdp]
 phase_list= ["S","SS","SSS","ScS","Sdiff"] 
+percent   = [0.2,0.2,0.2,0.2,0.2]
 
 nod_p     = nodal_plane_filter(ds.events[0])
 
@@ -314,7 +323,7 @@ def process(this_station_group, other_station_group):
 
     all_results= []
 
-    results    = make_measure(observed,synthetic,stationxml,phase_list,evloc,obsd_tag,nod_p,noise_acc,f)
+    results    = make_measure(observed,synthetic,stationxml,phase_list,evloc,obsd_tag,nod_p,noise_acc,f,percent)
 
 
     all_results.append(results)
@@ -330,9 +339,9 @@ b          = time.time
 
 if ds.mpi.rank == 0:
     #print(all_output)
-    with open("/scratch1/09038/ayon8181/scripts_amp/outputs/"+str(f)+"_"+obsd_fname+".txt",'a') as txt, \
-         open("/scratch1/09038/ayon8181/scripts_amp/errors/error_"+str(f)+"_"+obsd_fname+"_phase.txt",'a') as txt2, \
-         open("/scratch1/09038/ayon8181/scripts_amp/errors/error_"+str(f)+"_"+obsd_fname+"_all.txt",'a') as txt3:
+    with open("/scratch1/09038/ayon8181/scripts_amp/outputs/"+str(int(f))+"_"+obsd_fname+".txt2",'a') as txt, \
+         open("/scratch1/09038/ayon8181/scripts_amp/errors/error_"+str(int(f))+"_"+obsd_fname+"_phase.txt2",'a') as txt2, \
+         open("/scratch1/09038/ayon8181/scripts_amp/errors/error_"+str(int(f))+"_"+obsd_fname+"_all.txt2",'a') as txt3:
         for k in all_output.keys():
             if all_output[k][0] is not None and all_output[k][0][0] == 0 :
                 txt.write(event+" "+k+" ")
@@ -347,7 +356,7 @@ if ds.mpi.rank == 0:
 
             elif all_output[k][0] is not None and all_output[k][0][0] != 0:
                 
-                txt3.write(event+" "+str(all_output[k][0][1])+" "+str(all_output[k][0][0])+"/n")
+                txt3.write(event+" "+str(all_output[k][0][1])+" "+str(all_output[k][0][0])+"\n")
             
 del ds
 del ds2    
