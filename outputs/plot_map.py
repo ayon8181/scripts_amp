@@ -11,10 +11,10 @@ import multiprocessing as mp
 
 file_names      = ["obsd_1D_crust", "obsd_3D_crust","obsd_glad","real_data"]
 df=[]
-plot_dir="/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/plots_map_deep"
+plot_dir="/scratch1/09038/ayon8181/scripts_amp/outputs/plots_map"
 model=TauPyModel(model="prem")
 for i,f in enumerate(file_names):
-    temp    = pd.read_csv("/scratch1/09038/ayon8181/pypaw_workflow_test/outputs/"+f+".txt2",header=None,delimiter=" ",skipinitialspace=True)
+    temp    = pd.read_csv("/scratch1/09038/ayon8181/scripts_amp/outputs/"+f+".txt",header=None,delimiter=" ",skipinitialspace=True)
     #temp=temp[temp[4]>=100]
     df.append(temp)
 max_cc        = [0.0,0.0,0.0,0.0]

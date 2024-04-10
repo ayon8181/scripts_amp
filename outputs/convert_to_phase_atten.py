@@ -2,23 +2,23 @@ import pandas as pd
 import numpy as np
 
 
-file_names=["real_data.txt","obsd_1D_crust.txt","obsd_3D_crust.txt","prem_3D_crust.txt","obsd_glad.txt"]#,"prem_3D.txt4","obsd_1D.txt4","obsd_3D.txt4"]
+file_names=["real_data.txt","real_data_3D.txt","real_data_ref.txt"]#"obsd_3D_crust.txt","obsd_3D_crust_atten.txt2","prem_3D_atten.txt2"]#,"obsd_glad.txt"]#,"prem_3D.txt4","obsd_1D.txt4","obsd_3D.txt4"]
 df=[]
 for i,f in enumerate(file_names):
     temp    = pd.read_csv("/scratch1/09038/ayon8181/scripts_amp/outputs/0.0_"+f,header=None,delimiter=" ",skipinitialspace=True)
     df.append(temp)
 
-d_all=pd.merge(df[0],df[1],on=[0,1,2,3,4,5,6,7],suffixes=("_real","_1D"))
+d_all=pd.merge(df[0],df[1],on=[0,1,2,3,4,5,6,7],suffixes=("_real","_real_3D"))
 d_all=pd.merge(d_all,df[2],on=[0,1,2,3,4,5,6,7])
-d_all=pd.merge(d_all,df[3],on=[0,1,2,3,4,5,6,7],suffixes=("_3D","_prem_3D"))
-d_all=pd.merge(d_all,df[4],on=[0,1,2,3,4,5,6,7])
-d_all=pd.merge(d_all,df[1],on=[0,1,2,3,4,5,6,7],suffixes=("_glad","_prem_atten"))
+d_all=pd.merge(d_all,df[0],on=[0,1,2,3,4,5,6,7],suffixes=("_real_ref","_reals"))
+#d_all=pd.merge(d_all,df[4],on=[0,1,2,3,4,5,6,7])
+#d_all=pd.merge(d_all,df[1],on=[0,1,2,3,4,5,6,7],suffixes=("_glad","_prem_atten"))
 #d_all=pd.merge(d_all,df[6],on=[0,1,2,3,4,5,6,7])
 #d_all=pd.merge(d_all,df[7],on=[0,1,2,3,4,5,6,7],suffixes=("_1D_atten","_3D_atten"))
 
 
 phase_list=['S','SS','SSS','ScS','Sdiff']
-names=["_real","_1D","_3D","_prem_3D","_glad"]#,"_prem_atten","_1D_atten","_3D_atten"]
+names=["_real","_real_3D","_real_ref"]#,"_real_s40"]#,"_3D_atten","_prem_3D_atten"]#,"_glad"]#,"_prem_atten","_1D_atten","_3D_atten"]
 for k,ph in enumerate(phase_list):
     col_list=[]
     for i in range(8):
@@ -30,7 +30,7 @@ for k,ph in enumerate(phase_list):
     #    col_list.append(16+k*6+i)
     print(d_all)
     df_out=d_all[col_list]
-    df_out.to_csv("/scratch1/09038/ayon8181/scripts_amp/outputs/"+ph+"_all.txt",index=False,na_rep=np.nan)
+    df_out.to_csv("/scratch1/09038/ayon8181/scripts_amp/outputs/"+ph+"_real_atten.txt",index=False,na_rep=np.nan)
 
 col_list=[]
 for i in range(8):
@@ -51,7 +51,7 @@ col_list.append(8)
 col_list.append(9)   
 """
 df_out=d_all[col_list]
-df_out.to_csv("/scratch1/09038/ayon8181/scripts_amp/outputs/SS_S_all.txt",index=False,na_rep=np.nan)
+df_out.to_csv("/scratch1/09038/ayon8181/scripts_amp/outputs/SS_S_real_atten.txt",index=False,na_rep=np.nan)
 
 col_list=[]
 for i in range(8):
@@ -72,4 +72,4 @@ col_list.append(10)
 col_list.append(11)  
 """
 df_out=d_all[col_list]
-df_out.to_csv("/scratch1/09038/ayon8181/scripts_amp/outputs/SSS_SS_all.txt",index=False,na_rep=np.nan)
+df_out.to_csv("/scratch1/09038/ayon8181/scripts_amp/outputs/SSS_SS_real_atten.txt",index=False,na_rep=np.nan)
