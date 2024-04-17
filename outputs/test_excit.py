@@ -4,7 +4,7 @@ import obspy
 import glob
 from obspy.core.event import read_events
 moho        = {}
-with open("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/depthtomoho.xyz",'r') as txt:
+with open("/scratch1/09038/ayon8181/scripts_amp/outputs/depthtomoho.xyz",'r') as txt:
     data = csv.reader(txt, skipinitialspace=True, delimiter=" ")
     for row in data:
         lats   = math.floor(float(row[1]))
@@ -13,7 +13,7 @@ with open("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/depthtomoho.xyz",'r
             moho[lats] = {}
         moho[lats][lons] = float(row[2])
 
-for i in glob.glob("/scratch1/09038/ayon8181/pypaw_workflow_test/input_data/quakeml/*.xml"):
+for i in glob.glob("/scratch1/09038/ayon8181/scripts_amp/input_data/quakeml/*.xml"):
     cat=read_events(i)
     print(cat[0].event_descriptions)
     depth=cat[0].origins[0].depth
@@ -35,4 +35,4 @@ for i in glob.glob("/scratch1/09038/ayon8181/pypaw_workflow_test/input_data/quak
          i_2=0 
     if i_1 == i_2:
        with open("same.txt","a") as txt:
-            txt.write(str(cat[0].resource_id)+"\n")
+            txt.write(str(cat[0].resource_id).split("/")[2]+"\n")
