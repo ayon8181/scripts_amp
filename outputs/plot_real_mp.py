@@ -40,7 +40,18 @@ with open("./same.txt","r") as txt:
          ev_list.append(row[0])
 
 
-    
+moho={}
+with open("/scratch1/09038/ayon8181/scripts_amp/outputs/depthtomoho.xyz",'r') as txt:
+    data = csv.reader(txt, skipinitialspace=True, delimiter=" ")
+    for row in data:
+        lats   = math.floor(float(row[1]))
+        lons   = math.floor(float(row[0]))
+        if lats not in moho.keys():
+            moho[lats] = {}
+        moho[lats][lons] = float(row[2])
+
+
+
          
 
 file_names      = ["_real","_1D","_3D","_glad","_prem_3D"]#"_1D","_3D","_glad","_prem_3D"]#"_prem_atten","_1D_atten","_3D_atten"]#"_1D","_3D","_glad","_prem_3D"]#"_prem_atten","_1D_atten","_3D_atten"]#"_1D","_3D","_glad","_prem_3D"]#"_prem_atten","_1D_atten","_3D_atten"]#"_1D","_3D","_glad","_prem_3D"]#"_1D","_3D","_glad","_prem_3D"]#
@@ -85,8 +96,16 @@ for k,ph in enumerate(phase_list):
     df=pd.read_csv("/scratch1/09038/ayon8181/scripts_amp/outputs/"+ph+"_all.txt",skipinitialspace=True,delimiter=",")
     df_plot=df[df[str(16+k*7+5)+"_real"].notna()]
     df_plot=df_plot[(df_plot["0"].isin(ev_list))]
+    #df_plot=df_plot[moho]
     #df_plot=df_plot[(np.abs(df_plot[str(16+k*7+2)+"_real"])<15) & (np.abs(df_plot[str(16+k*7+2)+"_1D"])<15) &(np.abs(df_plot[str(16+k*7+2)+"_3D"])<15) & (np.abs(df_plot[str(16+k*7+2)+"_prem_3D"])<15)]
-    
+    for i,df in enumerate(file_names):
+        df_plot=df_plot[(np.abs(df_plot[str(16+k*7+2)+df])<12)]
+        df_plot=df_plot[(np.abs(df_plot[str(16+k*7+1)+df])>0.75)]
+        df_plot=df_plot[(np.abs(np.log(df_plot[str(16+k*7+5)+df]))<1.5)]
+        df_plot=df_plot[(np.abs(np.log(df_plot[str(16+k*7+3)+df]))<1.5)]
+        df_plot=df_plot[(np.abs(np.log(df_plot[str(16+k*7+4)+df])<1.5))]
+        df_plot=df_plot[(np.abs(df_plot[str(16+k*7+6)+df])<1.5)]
+    df_plot=df_plot[(df_plot["0"].isin(ev_list))]
 
     
     if k==0:    
@@ -96,24 +115,9 @@ for k,ph in enumerate(phase_list):
         results=pool.starmap(points, [(rows["3"],rows["2"],rows["4"],rows["6"],rows["5"],rows["7"],2/5.0,3/5.0)  for i,rows in df_plot.iterrows()])
         pool.close()
         pool.join()
-        """
-        comm =MPI.COMM_WORLD
-        size =comm.Get_size()
-        rank =comm.Get_rank()
-
-        inputs=[(rows["3"],rows["2"],rows["4"],rows["6"],rows["5"],rows["7"],2/5.0,3/5.0)  for i,rows in df_plot.iterrows()]
-
-        inputs_chunk=comm.scatter(inputs,root=0)
-
-        results_chunk=[points(*args) for args in inputs_chunk]
-
-        results = comm.gather(results_chunk, root=0)
-
-        if rank==0:
-            results = [result for chunk in results for result in chunk]
         
-        MPI.Finalize()
-        """
+        
+        
 
 
         start_lat=[]
@@ -154,24 +158,10 @@ for k,ph in enumerate(phase_list):
         results=pool.starmap(points, [(rows["3"],rows["2"],rows["4"],rows["6"],rows["5"],rows["7"],45/100.0,55/100.0)  for i,rows in df_plot.iterrows()])
         pool.close()
         pool.join()
-        """
-        comm =MPI.COMM_WORLD
-        size =comm.Get_size()
-        rank =comm.Get_rank()
+        
+        
 
-        inputs=[(rows["3"],rows["2"],rows["4"],rows["6"],rows["5"],rows["7"],45/100.0,55/100.0)  for i,rows in df_plot.iterrows()]
-
-        inputs_chunk=comm.scatter(inputs,root=0)
-
-        results_chunk=[points(*args) for args in inputs_chunk]
-
-        results = comm.gather(results_chunk, root=0)
-
-        if rank==0:
-            results = [result for chunk in results for result in chunk]
-        MPI.Finalize()
-
-        """
+        
         start_lat=[]
         start_lon=[]
         mid_lat=[]
@@ -207,23 +197,9 @@ for k,ph in enumerate(phase_list):
         results=pool.starmap(points, [(rows["3"],rows["2"],rows["4"],rows["6"],rows["5"],rows["7"],45/100.0,55/100.0)  for i,rows in df_plot.iterrows()])
         pool.close()
         pool.join()
-        """
-        comm =MPI.COMM_WORLD
-        size =comm.Get_size()
-        rank =comm.Get_rank()
-
-        inputs=[(rows["3"],rows["2"],rows["4"],rows["6"],rows["5"],rows["7"],45/100.0,55/100.0)  for i,rows in df_plot.iterrows()]
-
-        inputs_chunk=comm.scatter(inputs,root=0)
-
-        results_chunk=[points(*args) for args in inputs_chunk]
-
-        results = comm.gather(results_chunk, root=0)
-
-        if rank==0:
-            results = [result for chunk in results for result in chunk]
-        MPI.Finalize()
-        """
+        
+        
+        
 
         start_lat=[]
         start_lon=[]
@@ -260,23 +236,9 @@ for k,ph in enumerate(phase_list):
         results=pool.starmap(points, [(rows["3"],rows["2"],rows["4"],rows["6"],rows["5"],rows["7"],45/100.0,55/100.0)  for i,rows in df_plot.iterrows()])
         pool.close()
         pool.join()
-        """
-        comm =MPI.COMM_WORLD
-        size =comm.Get_size()
-        rank =comm.Get_rank()
-
-        inputs=[(rows["3"],rows["2"],rows["4"],rows["6"],rows["5"],rows["7"],45/100.0,55/100.0)  for i,rows in df_plot.iterrows()]
-
-        inputs_chunk=comm.scatter(inputs,root=0)
-
-        results_chunk=[points(*args) for args in inputs_chunk]
-
-        results = comm.gather(results_chunk, root=0)
-
-        if rank==0:
-            results = [result for chunk in results for result in chunk]
-        MPI.Finalize()
-        """
+        
+        
+        
         start_lat=[]
         start_lon=[]
         mid_lat=[]
@@ -312,23 +274,8 @@ for k,ph in enumerate(phase_list):
         results=pool.starmap(points, [(rows["3"],rows["2"],rows["4"],rows["6"],rows["5"],rows["7"],45/100.0,55/100.0)  for i,rows in df_plot.iterrows()])
         pool.close()
         pool.join()
-        """
-        comm =MPI.COMM_WORLD
-        size =comm.Get_size()
-        rank =comm.Get_rank()
-
-        inputs=[(rows["3"],rows["2"],rows["4"],rows["6"],rows["5"],rows["7"],45/100.0,55/100.0)  for i,rows in df_plot.iterrows()]
-
-        inputs_chunk=comm.scatter(inputs,root=0)
-
-        results_chunk=[points(*args) for args in inputs_chunk]
-
-        results = comm.gather(results_chunk, root=0)
-
-        if rank==0:
-            results = [result for chunk in results for result in chunk]
-        MPI.Finalize()
-        """
+        
+        
         start_lat=[]
         start_lon=[]
         mid_lat=[]
@@ -360,10 +307,10 @@ for k,ph in enumerate(phase_list):
         df_plot['end_lon']   = end_lon
 
     
-
-       
+    
+     
     for i,df in enumerate(file_names):
-
+ 
         print(df_plot)
 
         ### Plotting Global Maps for Amplitude Ratio
@@ -390,11 +337,11 @@ for k,ph in enumerate(phase_list):
         fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.000005p",transparency=40)
         #fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.000001p,+z",transparency=40)#zvalue=df_plot[16+k*5+4],cmap=True,transparency=40)            
         #fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.000001p,+z",transparency=40)#zvalue=df_plot[16+k*5+4],cmap=True,transparency=40)
-        fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.1c",fill=df_plot[str(16+k*7+4)+df],pen="0.000001p",cmap=True,transparency=40)
+        fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.1c",fill=np.log(df_plot[str(16+k*7+4)+df]),pen="0.000001p",cmap=True,transparency=40)
         fig.coast(shorelines=True, frame=True)
         if i==0:
            fig.colorbar()
-        fig.savefig(plot_dir+"/global_env_"+file_names[i]+"_"+ph+".png")
+        fig.savefig(plot_dir+"/global_env_"+file_names[i]+"_"+ph+".png",dpi=600)
         plt.close()
         
         ### Plotting Global Maps for CC Traveltime
@@ -410,7 +357,7 @@ for k,ph in enumerate(phase_list):
         fig.coast(shorelines=True, frame=True)
         if i==0:
            fig.colorbar()
-        fig.savefig(plot_dir+"/global_3d1d_"+file_names[i]+"_"+ph+".png")
+        fig.savefig(plot_dir+"/global_3d1d_"+file_names[i]+"_"+ph+".png",dpi=600)
         plt.close()
         
         ### Plotting Global Maps for 3D/1D Amplitude
@@ -426,7 +373,7 @@ for k,ph in enumerate(phase_list):
         fig.coast(shorelines=True, frame=True)
         if i==0:
            fig.colorbar()
-        fig.savefig(plot_dir+"/global_cc_t_"+file_names[i]+"_"+ph+".png")
+        fig.savefig(plot_dir+"/global_cc_t_"+file_names[i]+"_"+ph+".png",dpi=600)
         plt.close()
 
         fig=pygmt.Figure()
@@ -441,7 +388,7 @@ for k,ph in enumerate(phase_list):
         fig.coast(shorelines=True, frame=True)
         if i==0:
            fig.colorbar()
-        fig.savefig(plot_dir+"/global_amp_misfit_"+file_names[i]+"_"+ph+".png")
+        fig.savefig(plot_dir+"/global_amp_misfit_"+file_names[i]+"_"+ph+".png",dpi=600)
         plt.close()
         
 
@@ -503,7 +450,7 @@ for k,ph in enumerate(phase_list):
     # Plot Histograms for Envelope Ratios
     plt.figure(1,figsize=(7.08,7.08))
     for i,df in enumerate(file_names):
-        plt.hist(df_plot[str(16+k*7+4)+df], bins=23, range=(-1.5,1.5), edgecolor=colors[i], linewidth=3, linestyle=style[i],label=labels[i],facecolor=fccs[i], alpha = alp[i])
+        plt.hist(np.log(df_plot[str(16+k*7+4)+df]), bins=23, range=(-1.5,1.5), edgecolor=colors[i], linewidth=3, linestyle=style[i],label=labels[i],facecolor=fccs[i], alpha = alp[i])
         #bin_centers = 0.5 * (bins[:-1] + bins[1:])
         #plt.plot(bin_centers, values, color=colors[i],linewidth=1)
         #plt.axvline(np.mean(np.log(df_plot[str(16+k*7+4)+df])),color=colors[i],linewidth=2)
@@ -513,7 +460,7 @@ for k,ph in enumerate(phase_list):
     plt.ylabel("Counts")
     plt.savefig(plot_dir+"/Histogram_envp_3d_1d_"+ph+".png",dpi=600)
     plt.close()
-
+    
     plt.figure(1,figsize=(7.08,7.08))
     for i,df in enumerate(file_names):
         plt.hist(df_plot[str(16+k*7+6)+df], bins=23, range=(-1.5,1.5), edgecolor=colors[i], linewidth=3, linestyle=style[i],label=labels[i],facecolor=fccs[i], alpha = alp[i])
@@ -526,14 +473,14 @@ for k,ph in enumerate(phase_list):
     plt.ylabel("Counts")
     plt.savefig(plot_dir+"/Histogram_amp_misfit_"+ph+".png",dpi=600)
     plt.close()
-
+    
 
     ## Plot Line Histograms
     plt.figure(1,figsize=(7.08,3.54))
     for i,df in enumerate(file_names):
         
        
-        y, edges = np.histogram(np.log(df_plot[str(16+k*7+3)+df]), bins=23, range=(-1.5,1.5))
+        y, edges = np.histogram(np.log(df_plot[str(16+k*7+5)+df]), bins=23, range=(-1.5,1.5))
         centers = 0.5 * (edges[1:] + edges[:-1])
         plt.plot(centers,y/np.sum(y),marker=markers[i],color=colors[i],alpha=alp[i],lw=lss[i])
     plt.text(1.3,0.8*max(y/np.sum(y)),ph)
@@ -583,7 +530,7 @@ for k,ph in enumerate(phase_list):
     # Plot Histograms for Envelope Ratios
     plt.figure(1,figsize=(7.08,3.54))
     for i,df in enumerate(file_names):
-        y, edges = np.histogram(df_plot[str(16+k*7+4)+df], bins=23, range=(-1.5,1.5))
+        y, edges = np.histogram(np.log(df_plot[str(16+k*7+4)+df]), bins=23, range=(-1.5,1.5))
         centers = 0.5 * (edges[1:] + edges[:-1])
         plt.plot(centers,y/np.sum(y),marker=markers[i],color=colors[i],alpha=alp[i],lw=lss[i])
     plt.text(1.3,0.8*max(y/np.sum(y)),ph)
@@ -618,7 +565,7 @@ for k,ph in enumerate(phase_list):
        
        ax.plot(np.linspace(-1.5,1.5,100), np.linspace(-1.5,1.5,100), linestyle='--', color='black')
        ax.plot(np.linspace(-1.5,1.5,100), -np.linspace(-1.5,1.5,100), linestyle='--', color='black')
-       ax.scatter(df_plot[str(16+k*7+4)+"_real"],df_plot[str(16+k*7+4)+df],marker=".",alpha=0.6)
+       ax.scatter(np.log(df_plot[str(16+k*7+4)+"_real"]),np.log(df_plot[str(16+k*7+4)+df]),marker=".",alpha=0.6)
        ax.set_xlabel("$X_{env}$ for Real Data")
        ax.set_ylabel("$X_{env}$ for "+labels[i+1])
        
@@ -685,4 +632,4 @@ for k,ph in enumerate(phase_list):
        plt.tight_layout()
        plt.savefig(plot_dir+"/Scatter_amp_3d_1d_"+ph+"_"+labels[i+1]+".png",dpi=600)
        plt.close()
-  
+

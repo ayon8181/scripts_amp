@@ -72,7 +72,9 @@ def SNR(noise,data):
 
     return rat_power, rat_max
 
-def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_acc,f):                 #event_loc=[evla,evlo,evdp]
+
+
+def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_acc,f,percent):                 #event_loc=[evla,evlo,evdp]
     """
     Error Code:
     1: Rejected as the station is on a nodal plane
@@ -93,11 +95,13 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
         f_min = 1/50.0
         f_max = 1/20.0
     
+    
 
     model=TauPyModel(model="prem")
     #create output arrays
     max_cc       = np.full(len(phase_list),np.nan)
     amp_rat_3d1d = np.full(len(phase_list),np.nan)
+    amp_misfits = np.full(len(phase_list),np.nan)
     env_rat_3d1d = np.full(len(phase_list),np.nan)
     time_shifts  = np.full(len(phase_list),np.nan)
     obsd_obsd    = np.full(len(phase_list),np.nan)
@@ -139,8 +143,8 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
             obsd_data     = obsd.select(component="T")[0]
             synt_data     = synt.select(component="T")[0]
             
-            obsd_data     = obsd_data.filter("bandpass",freqmin=f_min,freqmax=f_max,corners=4,zerophase=True)
-            synt_data     = synt_data.filter("bandpass",freqmin=f_min,freqmax=f_max,corners=4,zerophase=True)
+            obsd_data     = obsd_data.filter("bandpass",freqmin=f_min,freqmax=f_max,corners=6,zerophase=True)
+            synt_data     = synt_data.filter("bandpass",freqmin=f_min,freqmax=f_max,corners=6,zerophase=True)
             sampling_rate = synt_data.stats.sampling_rate
             dt            = synt_data.stats.delta
             obsd_anltc    = hilbert(obsd_data.data)
@@ -152,6 +156,7 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
             
             arrival = model.get_travel_times(source_depth_in_km=evdp,distance_in_degree=gcarc,phase_list=["P"])
             n_start_index=np.nan
+            #print(arrival)
             if len(arrival) != 0:
                arrival_time = arrival[0].time
 
@@ -184,18 +189,21 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
 
 
             for i,phase in enumerate(phase_list):
+                pt=percent[i]
+                t_bef = pt/f_max
+                t_aft = (1+pt)/f_max
                 arrivals = model.get_travel_times(source_depth_in_km=evdp,distance_in_degree=gcarc,phase_list=[phase])
                 if len(arrivals) != 0:
                     arrival_time = arrivals[0].time           #arrival_time in seconds
                 
                     ## Cut 100s windows central to the 
                     arr_index    = int(arrival_time*sampling_rate)
-                    start_index  = int(arr_index-50*sampling_rate)
-                    end_index    = int(arr_index+50*sampling_rate)
+                    start_index  = int(arr_index-t_bef*sampling_rate)
+                    end_index    = int(arr_index+t_aft*sampling_rate)
 
                     synt_wdow    = synt_data.data[start_index:end_index]
                     en_synt_wdow = synt_envp[start_index:end_index]
-                    obsd_cut     = obsd_data.data[int(start_index-50*sampling_rate):int(end_index+50*sampling_rate)]
+                    obsd_cut     = obsd_data.data[int(start_index-t_bef*sampling_rate):int(end_index+t_aft*sampling_rate)]
 
 
                     ## Filter Data on SNR
@@ -203,7 +211,8 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
                     if w_i <= noise_acc[2] and w_m <= noise_acc[3]:
                         success[i] = 2
                         continue 
-
+                    
+                    
                     ## Calculate cross-correlation co-efficients
                     try:
                         cc           = correlate_template(obsd_cut,synt_wdow,mode="valid",normalize="full",method="auto")
@@ -212,14 +221,14 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
                         continue
                     max_ind      = np.argmax(cc)
                     max_cc_val   = cc[max_ind]
-                    shift        = int(max_ind - int(len(cc)/2)-1)
+                    shift        = int(-t_bef*sampling_rate+max_ind)
                     time_shift   = shift/sampling_rate
 
                     ## Filter out based on cross-correlation value
-                    if np.abs(time_shift) >= 35:
+                    if np.abs(time_shift) >= 20:
                        success[i] = 4
                        continue
-
+                    #print(start_index,shift,end_index)
                     obsd_wdow    = obsd_data[start_index+shift:end_index+shift]
                     en_obsd_wdow = obsd_envp[start_index+shift:end_index+shift]
 
@@ -234,17 +243,27 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
                     sqrd_synt    = integrate.trapz(synt_wdow*synt_wdow, dx=dt)
                     obsd_synt_val= integrate.trapz(obsd_wdow*synt_wdow, dx=dt)
                     
+                    
                     energy_ratio = sqrd_obsd/sqrd_synt
-
+                    
                     max_envp_obs = max(en_obsd_wdow)
                     max_envp_syn = max(en_synt_wdow)
                     
 
-                    envp_ratio   = max_envp_obs/max_envp_syn
+                    
+                    
+                    
+                    rms_obsd     = np.sqrt(np.mean(obsd_wdow**2))
+                    rms_synt     = np.sqrt(np.mean(synt_wdow**2))
+                    envp_rat     = en_obsd_wdow/en_synt_wdow
 
+                    amp_misfit   = np.log(rms_obsd/rms_synt)
+                    env_misfit   = max_envp_obs/max_envp_syn
+                    
                     max_cc[i]       = max_cc_val
                     amp_rat_3d1d[i] = energy_ratio
-                    env_rat_3d1d[i] = envp_ratio
+                    amp_misfits[i]  = amp_misfit
+                    env_rat_3d1d[i] = env_misfit
                     time_shifts[i]  = time_shift
                     obsd_obsd[i]    = sqrd_obsd
                     synt_synt[i]    = sqrd_synt
@@ -275,9 +294,10 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
                 output.append(amp_rat_3d1d[j])
                 output.append(env_rat_3d1d[j])
                 output.append(0.5*(A1[j]+A2[j]))
+                output.append(amp_misfits[j])
             
             return [0,name,output,success]
-        except IndexError:
+        except ValueError:
                return [3,name]
 
 
@@ -287,7 +307,7 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
 ds        = ASDFDataSet("/scratch1/09038/ayon8181/scripts_amp/seis/proc/"+event+".T017-250s.proc_"+obsd_fname+".h5",mode="r")
 ds2       = ASDFDataSet("/scratch1/09038/ayon8181/scripts_amp/seis/proc/"+event+".T017-250s.proc_1D_ref.h5",mode="r")
 
-noise_acc = [0,0,0,0]
+noise_acc = [3.5,6.0,3,3]
 #print("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/proc/"+event+".T017-050s.proc_"+obsd_fname+".h5")
 
 evla      = ds.events[0].origins[0].latitude
@@ -295,6 +315,7 @@ evlo      = ds.events[0].origins[0].longitude
 evdp      = ds.events[0].origins[0].depth/1000.0
 evloc     = [evla,evlo,evdp]
 phase_list= ["S","SS","SSS","ScS","Sdiff"] 
+percent   = [0.2,0.2,0.2,0.2,0.2]
 
 nod_p     = nodal_plane_filter(ds.events[0])
 
@@ -314,7 +335,7 @@ def process(this_station_group, other_station_group):
 
     all_results= []
 
-    results    = make_measure(observed,synthetic,stationxml,phase_list,evloc,obsd_tag,nod_p,noise_acc,f)
+    results    = make_measure(observed,synthetic,stationxml,phase_list,evloc,obsd_tag,nod_p,noise_acc,f,percent)
 
 
     all_results.append(results)
@@ -330,9 +351,9 @@ b          = time.time
 
 if ds.mpi.rank == 0:
     #print(all_output)
-    with open("/scratch1/09038/ayon8181/scripts_amp/outputs/"+str(f)+"_"+obsd_fname+"_ref.txt",'a') as txt, \
-         open("/scratch1/09038/ayon8181/scripts_amp/errors/error_"+str(f)+"_"+obsd_fname+"_ref_phase.txt",'a') as txt2, \
-         open("/scratch1/09038/ayon8181/scripts_amp/errors/error_"+str(f)+"_"+obsd_fname+"_ref_all.txt",'a') as txt3:
+    with open("/scratch1/09038/ayon8181/scripts_amp/outputs/attenuation/"+str(int(f))+"_"+obsd_fname+"_ref_1.txt",'a') as txt, \
+         open("/scratch1/09038/ayon8181/scripts_amp/errors/error_"+str(int(f))+"_"+obsd_fname+"_phase_ref_1.txt",'a') as txt2, \
+         open("/scratch1/09038/ayon8181/scripts_amp/errors/error_"+str(int(f))+"_"+obsd_fname+"_all_ref_1.txt",'a') as txt3:
         for k in all_output.keys():
             if all_output[k][0] is not None and all_output[k][0][0] == 0 :
                 txt.write(event+" "+k+" ")
@@ -347,7 +368,7 @@ if ds.mpi.rank == 0:
 
             elif all_output[k][0] is not None and all_output[k][0][0] != 0:
                 
-                txt3.write(event+" "+str(all_output[k][0][1])+" "+str(all_output[k][0][0])+"/n")
+                txt3.write(event+" "+str(all_output[k][0][1])+" "+str(all_output[k][0][0])+"\n")
             
 del ds
 del ds2    

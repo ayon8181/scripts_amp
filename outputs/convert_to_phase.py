@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-file_names=["real_data.txt2","obsd_1D_crust.txt2","obsd_3D_crust.txt2","prem_3D_crust.txt2","obsd_glad.txt2"]#,"prem_3D.txt4","obsd_1D.txt4","obsd_3D.txt4"]
+file_names=["real_data.txt","obsd_1D_crust.txt","obsd_3D_crust.txt","prem_3D_crust.txt","obsd_glad.txt"]#,"prem_3D.txt4","obsd_1D.txt4","obsd_3D.txt4"]
 df=[]
 for i,f in enumerate(file_names):
     temp    = pd.read_csv("/scratch1/09038/ayon8181/scripts_amp/outputs/0_"+f,header=None,delimiter=" ",skipinitialspace=True)

@@ -14,7 +14,7 @@ import scipy.stats as stats
 #import geopy.distance
 from geographiclib.geodesic import Geodesic
 from matplotlib.lines import Line2D
-from mpi4py import MPI
+#from mpi4py import MPI
 
 file_names      = ["_real","_1D","_3D","_glad","_prem_3D"]#"_1D","_3D","_glad","_prem_3D"]#"_prem_atten","_1D_atten","_3D_atten"]#"_1D","_3D","_glad","_prem_3D"]#"_prem_atten","_1D_atten","_3D_atten"]#"_1D","_3D","_glad","_prem_3D"]#"_prem_atten","_1D_atten","_3D_atten"]#"_1D","_3D","_glad","_prem_3D"]#"_1D","_3D","_glad","_prem_3D"]#
 colors=['darkred','cyan','yellowgreen','chocolate','black']    
@@ -26,7 +26,7 @@ markers=[".","+","o","*","x"]
 alp   =[0.5,1,1,1,1]
 df=[]
 
-plot_dir="/scratch1/09038/ayon8181/scripts_amp/outputs/plots_filter"
+plot_dir="/scratch1/09038/ayon8181/scripts_amp/outputs/plots_average/same"
 
 ev_list=[]
 with open("./same.txt","r") as txt:
@@ -57,7 +57,7 @@ for k,ph in enumerate(phase_list):
         df_plot=df_plot[(np.abs(df_plot[str(16+k*7+1)+df])>0.75)]
         df_plot=df_plot[(np.abs(np.log(df_plot[str(16+k*7+5)+df]))<1.5)]
         df_plot=df_plot[(np.abs(np.log(df_plot[str(16+k*7+3)+df]))<1.5)]
-        df_plot=df_plot[(np.abs(df_plot[str(16+k*7+4)+df])<1.5)]
+        df_plot=df_plot[(np.abs(np.log(df_plot[str(16+k*7+4)+df])<1.5))]
         df_plot=df_plot[(np.abs(df_plot[str(16+k*7+6)+df])<1.5)]
     df_plot=df_plot[(df_plot["0"].isin(ev_list))]
 
@@ -112,6 +112,26 @@ for k,ph in enumerate(phase_list):
     plt.tight_layout()
     plt.savefig(plot_dir+"/ep_a_"+ph+".png",dpi=600)
     plt.close()
+
+    df_plot_2=df_plot.copy()
+    ls=["7"]
+    plt.figure(1,figsize=(7.08,3.54))
+    for i,df in enumerate(file_names):
+        ls.append(str(16+k*7+6)+df)
+    df_dist = df_plot_2[ls].copy()
+    for i,cl in enumerate(ls[1:]):
+        df_dist[cl] =df_plot_2[cl]
+    
+    df_dist_2 = df_dist.groupby(pd.cut(df_dist["7"],np.arange(30,150,2.5))).mean()
+    df_dist_2["dist"] = np.arange(32.5,150,2.5)
+    for i,cl in enumerate(ls[1:]):
+        plt.plot(df_dist_2["dist"], df_dist_2[cl],label=labels[i],marker=markers[i],color=colors[i],lw=0.5)
+    plt.ylim(-0.5,0.5)
+    plt.xlabel("Epicentral Distance")
+    plt.ylabel("$X_{1} for "+ph+" phase")
+    plt.tight_layout()
+    plt.savefig(plot_dir+"/ep_am_"+ph+".png",dpi=600)
+    plt.close()
     
     df_plot_2=df_plot.copy()
     ls=["7"]
@@ -120,7 +140,7 @@ for k,ph in enumerate(phase_list):
         ls.append(str(16+k*7+4)+df)
     df_dist = df_plot_2[ls].copy()
     for cl in ls[1:]:
-        df_dist[cl] = df_plot_2[cl]
+        df_dist[cl] = np.log(df_plot_2[cl])
     df_dist_2 = df_dist.groupby(pd.cut(df_dist["7"],np.arange(30,150,2.5))).mean()
     df_dist_2["dist"] = np.arange(32.5,150,2.5)
     for i,cl in enumerate(ls[1:]):
@@ -131,7 +151,7 @@ for k,ph in enumerate(phase_list):
     plt.tight_layout()
     plt.savefig(plot_dir+"/ep_e_"+ph+".png",dpi=600)
     plt.close()
-
+    plt.rc('legend', fontsize=12) 
     df_plot_2=df_plot.copy()
     ls=["7"]
     plt.figure(1,figsize=(7.08,3.54))
@@ -150,3 +170,28 @@ for k,ph in enumerate(phase_list):
     plt.tight_layout()
     plt.savefig(plot_dir+"/ep_am_"+ph+".png",dpi=600)
     plt.close()
+    for i,df in enumerate(file_names):
+        df_plot_2=df_plot.copy()
+        ls=["7"]
+        plt.figure(1,figsize=(7.08,3.54))
+
+        ls.append(str(16+k*7+6)+df)
+        ls.append(str(16+k*7+4)+df)
+        ls.append(str(16+k*7+5)+df)
+            
+        df_dist = df_plot_2[ls].copy()
+        for cl in ls[1:]:
+            df_dist[cl] = df_plot_2[cl]
+        df_dist_2 = df_dist.groupby(pd.cut(df_dist["7"],np.arange(30,150,2.5))).mean()
+        df_dist_2["dist"] = np.arange(32.5,150,2.5)
+        
+        plt.plot(df_dist_2["dist"], df_dist_2[ls[1]],label="Amplitude Ratios",marker=markers[0],color=colors[0],lw=0.5)
+        plt.plot(df_dist_2["dist"], np.log(df_dist_2[ls[2]]),label="Envelope Ratios",marker=markers[1],color=colors[1],lw=0.5)
+        #plt.plot(df_dist_2["dist"], np.log(df_dist_2[ls[3]]),label="$X_{2}",marker=markers[2],color=colors[2],lw=0.5)
+        plt.ylim(-0.5,0.5)
+        plt.xlabel("Epicentral Distance")
+        plt.ylabel("Ratio Measurements")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(plot_dir+"/compare_"+file_names[i]+"_"+ph+"_.png",dpi=600)
+        plt.close()

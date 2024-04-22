@@ -26,18 +26,16 @@ markers=[".","+","o","*","x"]
 alp   =[0.5,1,1,1,1]
 df=[]
 
-plot_dir="/scratch1/09038/ayon8181/scripts_amp/outputs/plots_filter/same"
+plot_dir="/scratch1/09038/ayon8181/scripts_amp/outputs/plots_filter_rel"
 
 ev_list=[]
-with open("./same.txt","r") as txt:
+with open("./../event_list","r") as txt:
      reader=csv.reader(txt,skipinitialspace=True,delimiter="/")
      for row in reader:
          ev_list.append(row[0])
 
-
-
-ph="Sdiff"
-k=4
+ph="SS"
+k=1
 moho={}
 with open("/scratch1/09038/ayon8181/scripts_amp/outputs/depthtomoho.xyz",'r') as txt:
     data = csv.reader(txt, skipinitialspace=True, delimiter=" ")
@@ -61,21 +59,23 @@ def points(evla,evlo,evdp,stla,stlo,gcarc,lim1,lim2):
     
     return [[start[1],start[0]],[mid[1],mid[0]],[end[1],end[0]]]
 
-df=pd.read_csv("/scratch1/09038/ayon8181/scripts_amp/outputs/"+ph+"_all.txt",skipinitialspace=True,delimiter=",")
+df=pd.read_csv("/scratch1/09038/ayon8181/scripts_amp/outputs/SS_S_all.txt",skipinitialspace=True,delimiter=",")
 df_plot=df[df[str(16+k*7+5)+"_real"].notna()]
 df_plot=df_plot[(df_plot["0"].isin(ev_list))]
 #df_plot=df_plot[(np.abs(df_plot[str(16+k*7+2)+"_real"])<15) & (np.abs(df_plot[str(16+k*7+2)+"_1D"])<15) &(np.abs(df_plot[str(16+k*7+2)+"_3D"])<15) & (np.abs(df_plot[str(16+k*7+2)+"_prem_3D"])<15)]
+
 for i,df in enumerate(file_names):
     df_plot=df_plot[(np.abs(df_plot[str(16+k*7+2)+df])<12)]
     df_plot=df_plot[(np.abs(df_plot[str(16+k*7+1)+df])>0.75)]
     df_plot=df_plot[(np.abs(np.log(df_plot[str(16+k*7+5)+df]))<1.5)]
     df_plot=df_plot[(np.abs(np.log(df_plot[str(16+k*7+3)+df]))<1.5)]
-    df_plot=df_plot[(np.abs(np.log(df_plot[str(16+k*7+4)+df]))<1.5)]
+    df_plot=df_plot[(np.abs(df_plot[str(16+k*7+4)+df])<1.5)]
     df_plot=df_plot[(np.abs(df_plot[str(16+k*7+6)+df])<1.5)]
+
 df_plot=df_plot[(df_plot["0"].isin(ev_list))]
 
 
-df_plot = df_plot[(df_plot["7"]>=120) & (df_plot["7"]<=150)]
+df_plot = df_plot[(df_plot["7"]>=90) & (df_plot["7"]<=105)]
 #print(df_plot)#['0','1','2','3','4',str(16+k*5+3),str(16+k*5+4),str(16+k*5+2)]
 #pool = mp.Pool(int(os.environ['SLURM_CPUS_PER_TASK']))
 #results=pool.starmap(points, [(rows["3"],rows["2"],rows["4"],rows["6"],rows["5"],rows["7"],2/5.0,3/5.0)  for i,rows in df_plot.iterrows()])
@@ -133,69 +133,6 @@ for i,df in enumerate(file_names):
     if i==0:
         fig.colorbar()
     fig.savefig(plot_dir+"/global_amp_"+file_names[i]+"_"+ph+"_high.png",dpi=600)
-    plt.close()
-
-    ### Plotting Global Maps for Envelope Ratio
-    fig=pygmt.Figure()
-    pygmt.makecpt(cmap='polar',reverse=True,series=[-1.5,1.5]) 
-    fig.basemap(region="d",projection="N-150/12c",frame=True)
-    #fig.coast(shorelines=True, frame=True)   
-    fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.000005p",transparency=40)#zvalue=df_plot[16+k*5+3],cmap=True,            
-    fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.000005p",transparency=40)
-    #fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.000001p,+z",transparency=40)#zvalue=df_plot[16+k*5+4],cmap=True,transparency=40)            
-    #fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.000001p,+z",transparency=40)#zvalue=df_plot[16+k*5+4],cmap=True,transparency=40)
-    fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.1c",fill=np.log(df_plot[str(16+k*7+4)+df]),pen="0.000001p",cmap=True,transparency=40)
-    fig.coast(shorelines=True, frame=True)
-    if i==0:
-        fig.colorbar()
-    fig.savefig(plot_dir+"/global_env_"+file_names[i]+"_"+ph+"_high.png")
-    plt.close()
-    
-    ### Plotting Global Maps for CC Traveltime
-    fig=pygmt.Figure()
-    pygmt.makecpt(cmap='polar',reverse=True,series=[-1.5,1.5]) 
-    fig.basemap(region="d",projection="N-150/12c",frame=True)
-    #fig.coast(shorelines=True, frame=True)   
-    fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.000005p",transparency=40)#zvalue=df_plot[16+k*5+3],cmap=True,            
-    fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.000005p",transparency=40)
-    #fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.000001p,+z",transparency=40)#zvalue=df_plot[16+k*5+4],cmap=True,transparency=40)            
-    #fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.000001p,+z",transparency=40)#zvalue=df_plot[16+k*5+4],cmap=True,transparency=40)
-    fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.1c",fill=np.log(df_plot[str(16+k*7+3)+df]),pen="0.000001p",cmap=True,transparency=40)
-    fig.coast(shorelines=True, frame=True)
-    if i==0:
-        fig.colorbar()
-    fig.savefig(plot_dir+"/global_3d1d_"+file_names[i]+"_"+ph+"_high.png")
-    plt.close()
-    
-    ### Plotting Global Maps for 3D/1D Amplitude
-    fig=pygmt.Figure()
-    pygmt.makecpt(cmap='polar',reverse=True,series=[-10,10]) 
-    fig.basemap(region="d",projection="N-150/12c",frame=True)
-    #fig.coast(shorelines=True, frame=True)   
-    fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.000005p",transparency=40)#zvalue=df_plot[16+k*5+3],cmap=True,            
-    fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.000005p",transparency=40)
-    #fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.000001p,+z",transparency=40)#zvalue=df_plot[16+k*5+2],cmap=True,transparency=40)            
-    #fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.000001p,+z",transparency=40)#zvalue=df_plot[16+k*5+2],cmap=True,transparency=40)
-    fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.1c",fill=-(df_plot[str(16+k*7+2)+df]),pen="0.000001p",cmap=True,transparency=40)
-    fig.coast(shorelines=True, frame=True)
-    if i==0:
-        fig.colorbar()
-    fig.savefig(plot_dir+"/global_cc_t_"+file_names[i]+"_"+ph+"_high.png")
-    plt.close()
-
-    fig=pygmt.Figure()
-    pygmt.makecpt(cmap='polar',reverse=True,series=[-1.5,1.5]) 
-    fig.basemap(region="d",projection="N-150/12c",frame=True)
-    #fig.coast(shorelines=True, frame=True)   
-    fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.000005p",transparency=40)#zvalue=df_plot[16+k*5+3],cmap=True,            
-    fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.000005p",transparency=40)
-    #fig.plot(data=df_plot[["start_lon","start_lat","mid_lon","mid_lat"]],style="=0.01c+s",pen="0.000001p,+z",transparency=40)#zvalue=df_plot[16+k*5+4],cmap=True,transparency=40)            
-    #fig.plot(data=df_plot[["mid_lon","mid_lat","end_lon","end_lat"]],style="=0.01c+s",pen="0.000001p,+z",transparency=40)#zvalue=df_plot[16+k*5+4],cmap=True,transparency=40)
-    fig.plot(x=df_plot.mid_lon,y=df_plot.mid_lat,style="c0.1c",fill=df_plot[str(16+k*7+6)+df],pen="0.000001p",cmap=True,transparency=40)
-    fig.coast(shorelines=True, frame=True)
-    if i==0:
-        fig.colorbar()
-    fig.savefig(plot_dir+"/global_amp_misfit_"+file_names[i]+"_"+ph+"_high.png")
     plt.close()
 
 

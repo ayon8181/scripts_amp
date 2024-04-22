@@ -255,11 +255,12 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
                     
                     rms_obsd     = np.sqrt(np.mean(obsd_wdow**2))
                     rms_synt     = np.sqrt(np.mean(synt_wdow**2))
-                    envp_rat     = en_obsd_wdow/en_synt_wdow
+                    rms_en_obsd  = np.sqrt(np.mean(en_obsd_wdow**2))
+                    rms_en_synt  = np.sqrt(np.mean(en_synt_wdow**2))
 
                     amp_misfit   = np.log(rms_obsd/rms_synt)
-                    env_misfit   = max_envp_obs/max_envp_syn
-                    
+                    env_misfit   = np.log(rms_en_obsd/rms_en_synt)
+                     
                     max_cc[i]       = max_cc_val
                     amp_rat_3d1d[i] = energy_ratio
                     amp_misfits[i]  = amp_misfit
@@ -305,7 +306,7 @@ def make_measure(obsd,synt,stationXML,phase_list,event_loc,obsd_tag,nod_p,noise_
 
 
 ds        = ASDFDataSet("/scratch1/09038/ayon8181/scripts_amp/seis/proc/"+event+".T017-250s.proc_"+obsd_fname+".h5",mode="r")
-ds2       = ASDFDataSet("/scratch1/09038/ayon8181/scripts_amp/seis/proc/"+event+".T017-250s.proc_synt.h5",mode="r")
+ds2       = ASDFDataSet("/scratch1/09038/ayon8181/scripts_amp/seis/proc/"+event+".T017-250s.proc_1D_ref.h5",mode="r")
 
 noise_acc = [3.5,6.0,3,3]
 #print("/scratch1/09038/ayon8181/pypaw_workflow_test/seis/proc/"+event+".T017-050s.proc_"+obsd_fname+".h5")
@@ -331,7 +332,7 @@ def process(this_station_group, other_station_group):
 
     stationxml = this_station_group.StationXML
     observed   = this_station_group["proc_"+obsd_tag]
-    synthetic  = other_station_group.proc_synt
+    synthetic  = other_station_group.proc_ref_1
 
     all_results= []
 
@@ -351,7 +352,7 @@ b          = time.time
 
 if ds.mpi.rank == 0:
     #print(all_output)
-    with open("/scratch1/09038/ayon8181/scripts_amp/outputs/"+str(int(f))+"_"+obsd_fname+".txt",'a') as txt, \
+    with open("/scratch1/09038/ayon8181/scripts_amp/outputs/attenuation/"+str(int(f))+"_"+obsd_fname+"_ref.txt",'a') as txt, \
          open("/scratch1/09038/ayon8181/scripts_amp/errors/error_"+str(int(f))+"_"+obsd_fname+"_phase.txt",'a') as txt2, \
          open("/scratch1/09038/ayon8181/scripts_amp/errors/error_"+str(int(f))+"_"+obsd_fname+"_all.txt",'a') as txt3:
         for k in all_output.keys():
