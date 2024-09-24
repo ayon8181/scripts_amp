@@ -1,0 +1,280 @@
+- input_data:
+    subfolders:
+      - sacdata:
+          path: "sacdata/{eventname}"
+          subfolders:
+            - synt_sac: "synt"
+            - obsd_glad_sac: "obsd_glad"
+            - real_data_sac: "real_data"
+            - obsd_1D_crust_sac: "obsd_1D_crust"
+            - prem_3D_crust_sac: "prem_3D_crust"
+            - obsd_3D_crust_atten_sac: "obsd_3D_crust_atten"
+            - obsd_1D_crust_atten_sac: "obsd_1D_crust_atten"
+            - prem_3D_atten_sac: "prem_3D_atten"
+            - obsd_3D_crust_2_sac: "obsd_3D_crust_2"
+            - obsd_3D_crust_15_sac: "obsd_3D_crust_15"
+            - 1D_ref_sac: "1D_ref"
+            - obsd_3D_crust_sac: "obsd_3D_crust"
+            - prem_q16_sac: "prem_q16"
+      - staxml: "staxml/{eventname}"
+      - quakeml:
+          files:
+            - quakeml: "{eventname}.xml"
+
+- converter:
+    subfolders:
+      - converter_paths:
+          path: "paths"
+          files:
+            - obsd_glad_converter_path: "obsd_glad2asdf.{eventname}.path.json"
+            - real_data_converter_path: "real_data2asdf.{eventname}.path.json"
+            - obsd_1D_crust_converter_path: "obsd_1D_crust2asdf.{eventname}.path.json"
+            - prem_3D_crust_converter_path: "prem_3D_crust2asdf.{eventname}.path.json"
+            - obsd_3D_crust_atten_converter_path: "obsd_3D_crust_atten2asdf.{eventname}.path.json"
+            - obsd_1D_crust_atten_converter_path: "obsd_1D_crust_atten2asdf.{eventname}.path.json"
+            - prem_3D_atten_converter_path: "prem_3D_atten2asdf.{eventname}.path.json"
+            - obsd_3D_crust_2_converter_path: "obsd_3D_crust_22asdf.{eventname}.path.json"
+            - obsd_3D_crust_15_converter_path: "obsd_3D_crust_152asdf.{eventname}.path.json"
+            - 1D_ref_converter_path: "1D_ref2asdf.{eventname}.path.json"           
+            - synt_converter_path: "synt2asdf.{eventname}.path.json"  
+            - prem_q16_converter_path: "prem_q162asdf.{eventname}.path.json"
+
+- proc:
+    subfolders:
+      - proc_paths:
+          path: "paths"
+          files:
+            - obsd_3D_crust_proc_path: "proc_obsd_3D_crust.{eventname}.{period_band}.path.json"
+            - synt_proc_path: "proc_synt.{eventname}.{period_band}.path.json"
+            - obsd_glad_proc_path: "proc_obsd_glad.{eventname}.{period_band}.path.json"
+            - real_data_proc_path: "proc_real_data.{eventname}.{period_band}.path.json"
+            - obsd_1D_crust_proc_path: "proc_obsd_1D_crust.{eventname}.{period_band}.path.json"
+            - prem_3D_crust_proc_path: "proc_prem_3D_crust.{eventname}.{period_band}.path.json"
+            - obsd_3D_crust_atten_proc_path: "proc_obsd_3D_crust_atten.{eventname}.{period_band}.path.json"
+            - obsd_1D_crust_atten_proc_path: "proc_obsd_1D_crust_atten.{eventname}.{period_band}.path.json"
+            - prem_3D_atten_proc_path: "proc_prem_3D_atten.{eventname}.{period_band}.path.json"
+            - obsd_3D_crust_2_proc_path: "proc_obsd_3D_crust_2.{eventname}.{period_band}.path.json"
+            - obsd_3D_crust_15_proc_path: "proc_obsd_3D_crust_15.{eventname}.{period_band}.path.json"
+            - 1D_ref_proc_path: "proc_1D_ref.{eventname}.{period_band}.path.json"
+            - prem_q16_proc_path: "proc_prem_q16.{eventname}.{period_band}.path.json"
+            - obsd_3D_crust_1_proc_path: "proc_obsd_3D_crust_1.{eventname}.{period_band}.path.json"
+            - obsd_3D_crust_18_proc_path: "proc_obsd_3D_crust_18.{eventname}.{period_band}.path.json"
+- windows:
+    subfolders:
+      - window_paths:
+          path: "paths"
+          files:
+            - window_path: "windows.{eventname}.{period_band}.path.json"
+      - windows_output:
+          path: "output"
+          subfolders:
+            - win_event:
+                path: "{eventname}"
+                subfolders:
+                  - win_event_period:
+                      path: "{period_band}"
+                      files:
+                        - windows_file: "windows.json"
+                        - windows_filter_file: "windows.filter.json"
+
+- measure:
+    subfolders:
+      - measure_paths:
+          path: "paths"
+          files:
+            - measure_path: "measure.{eventname}.{period_band}.path.json"
+      - measure_figures: "figures"
+      - measure_output:
+          path: "output"
+          files:
+            - measure_file: "measure.{eventname}.{period_band}.json"
+
+- adjoint:
+    subfolders:
+      - adjoint_paths:
+          path: "paths"
+          files:
+            - adjoint_path: "adjoint.{eventname}.{period_band}.path.json"
+      - adjoint_figures: "figures"
+      - adjoint_output:
+          path: "output"
+          files:
+            - adjoint_file: "adjoint.{eventname}.{period_band}.h5"
+
+
+- stations:
+    subfolders:
+      - stations_paths:
+          path: "paths"
+          files:
+            - stations_path: "stations.{eventname}.path.json"
+      - stations_output:
+          path: "output"
+          files:
+            - stations_file: "{eventname}.json"
+
+- filter:
+    subfolders:
+      - filter_paths:
+          path: "paths"
+          files:
+            - filter_path: "filter.{eventname}.{period_band}.path.json"
+
+- weights:
+    subfolders:
+      - weight_params:
+          path: "parfile"
+          files:
+            - weight_template: "template.window_weights.param.yml"
+            - weight_parfile: "window_weights.{eventname}.param.yml"
+      - weight_paths:
+          path: "paths"
+          files:
+            - weight_path: "window_weights.{eventname}.path.json"
+      - weight_output:
+          path: "output"
+          subfolders:
+            - weight_event:
+                path: "{eventname}"
+                subfolders:
+                  - weight_log:
+                      path: "log"
+                      files:
+                        - weight_log: "weight.log"
+                files:
+                  - weight_file: "window_weights.{period_band}.json"
+
+- sum_adjoint:
+    subfolders:
+      - sum_adjoint_output:
+          path: "output"
+          files:
+            - sum_adjoint_file: "adjoint_sum.{eventname}.h5"
+      - sum_adjoint_paths:
+          path: "paths"
+          files:
+            - sum_adjoint_path: "adjoint_sum.{eventname}.path.json"
+
+- seis:
+    subfolders:
+      - raw_obsd_3D_crust:
+          path: "raw"
+          files:
+            - raw_obsd_3D_crust: "{eventname}.obsd_3D_crust.h5"
+      - raw_synt:
+          path: "raw"
+          files:
+            - raw_synt: "{eventname}.synt.h5"
+      - raw_obsd_glad:
+          path: "raw"
+          files:
+            - raw_glad: "{eventname}.obsd_glad.h5"
+      - raw_real_data:
+          path: "raw"
+          files:
+            - raw_real_data: "{eventname}.real_data.h5" 
+      - raw_obsd_1D_crust:
+          path: "raw"
+          files:
+            - raw_obsd_1D_crust: "{eventname}.obsd_1D_crust.h5"    
+      - raw_prem_3D_crust:
+          path: "raw"
+          files:
+            - raw_prem_3D_crust: "{eventname}.prem_3D_crust.h5"
+      - raw_obsd_3D_crust_atten:
+          path: "raw"
+          files:
+            - raw_obsd_3D_crust_atten: "{eventname}.obsd_3D_crust_atten.h5"
+      - raw_obsd_1D_crust_atten:
+          path: "raw"
+          files:
+            - raw_obsd_1D_crust_atten: "{eventname}.obsd_1D_crust_atten.h5"
+      - raw_prem_3D_atten:
+          path: "raw"
+          files:
+            - raw_prem_3D_atten: "{eventname}.prem_3D_atten.h5"
+      - raw_1D_ref:
+          path: "raw"
+          files:
+            - raw_1D_ref: "{eventname}.1D_ref.h5"
+      - raw_obsd_3D_crust_2:
+          path: "raw"
+          files:
+            - raw_obsd_3D_crust_2: "{eventname}.obsd_3D_crust_2.h5"
+      - raw_obsd_3D_crust_15:
+          path: "raw"
+          files:
+            - raw_obsd_3D_crust_15: "{eventname}.obsd_3D_crust_15.h5"
+      - raw_obsd_3D_crust_18:
+          path: "raw"
+          files:
+            - raw_obsd_3D_crust_18: "{eventname}.obsd_3D_crust_18.h5"
+      - raw_obsd_3D_crust_1:
+          path: "raw"
+          files:
+            - raw_obsd_3D_crust_1: "{eventname}.obsd_3D_crust_1.h5"
+      - raw_prem_q16:
+          path: "raw"
+          files:
+            - raw_prem_q16: "{eventname}.prem_q16.h5"
+      - proc_obsd_3D_crust:
+          path: "proc"
+          files:
+            - proc_obsd_3D_crust: "{eventname}.{period_band}.proc_obsd_3D_crust.h5"
+      - proc_synt:
+          path: "proc"
+          files:
+            - proc_synt: "{eventname}.{period_band}.proc_synt.h5"
+      - proc_obsd_glad:
+          path: "proc"
+          files:
+            - proc_obsd_glad: "{eventname}.{period_band}.proc_obsd_glad.h5"
+      - proc_real_data:
+          path: "proc"
+          files:
+            - proc_real_data: "{eventname}.{period_band}.proc_real_data.h5"
+      - proc_obsd_1D_crust:
+          path: "proc"
+          files:
+            - proc_obsd_1D_crust: "{eventname}.{period_band}.proc_obsd_1D_crust.h5"
+      - proc_prem_3D_crust: 
+          path: "proc"
+          files:
+            - proc_prem_3D_crust: "{eventname}.{period_band}.proc_prem_3D_crust.h5"
+      - proc_obsd_3D_crust_atten:
+          path: "proc"
+          files:
+            - proc_obsd_3D_crust_atten: "{eventname}.{period_band}.proc_obsd_3D_crust_atten.h5"
+      - proc_obsd_1D_crust_atten:
+          path: "proc"
+          files:
+            - proc_obsd_1D_crust_atten: "{eventname}.{period_band}.proc_obsd_1D_crust_atten.h5"
+      - proc_prem_3D_atten:  
+          path: "proc"
+          files:
+            - proc_prem_3D_atten: "{eventname}.{period_band}.proc_prem_3D_atten.h5"
+      - proc_1D_ref:
+          path: "proc"
+          files:
+            - proc_1D_ref: "{eventname}.{period_band}.proc_1D_ref.h5"
+      - proc_obsd_3D_crust_2:
+          path: "proc"
+          files:
+            - proc_obsd_3D_crust_2: "{eventname}.{period_band}.proc_obsd_3D_crust_2.h5"
+      - proc_obsd_3D_crust_15:  
+          path: "proc"
+          files:
+            - proc_obsd_3D_crust_15: "{eventname}.{period_band}.proc_obsd_3D_crust_15.h5"
+      - proc_prem_q16: 
+          path: "proc"
+          files:
+            - proc_prem_q16: "{eventname}.{period_band}.proc_prem_q16.h5" 
+      - proc_obsd_3D_crust_18:
+          path: "proc"
+          files:
+            - proc_obsd_3D_crust_18: "{eventname}.{period_band}.proc_obsd_3D_crust_18.h5"
+      - proc_obsd_3D_crust_1:
+          path: "proc"
+          files:
+            - proc_obsd_3D_crust_1: "{eventname}.{period_band}.proc_obsd_3D_crust_1.h5" 
+      

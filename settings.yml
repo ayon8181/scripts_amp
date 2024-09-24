@@ -1,0 +1,34 @@
+period_bands:
+  - T017-250s
+
+raw_prem_q16_tag: synt
+raw_obsd_3D_crust_tag: obsd_3
+raw_synt_tag: synt
+raw_obsd_glad_tag: obsd_25
+raw_real_data_tag: real_data
+raw_obsd_1D_crust_tag: obsd_1
+raw_prem_3D_crust_tag: prem_3
+raw_obsd_3D_crust_atten_tag: obsd_33
+raw_obsd_1D_crust_atten_tag: obsd_13
+raw_prem_3D_atten_tag: prem_33
+raw_1D_ref_tag: ref_1
+raw_obsd_3D_crust_2_tag: obsd_32
+raw_obsd_3D_crust_15_tag: obsd_315
+raw_obsd_3D_crust_18_tag: synt
+raw_obsd_3D_crust_1_tag: synt
+proc_obsd_3D_crust_tag: proc_obsd_3
+proc_synt_tag: proc_synt
+proc_obsd_glad_tag: proc_obsd_25
+proc_real_data_tag: proc_real_data
+proc_obsd_1D_crust_tag: proc_obsd_1
+proc_prem_3D_crust_tag: proc_prem_3
+proc_obsd_3D_crust_atten_tag: proc_obsd_33
+proc_obsd_1D_crust_atten_tag: proc_obsd_13
+proc_prem_3D_atten_tag: proc_prem_33
+proc_1D_ref_tag: proc_ref_1
+proc_obsd_3D_crust_2_tag: proc_obsd_32
+proc_obsd_3D_crust_15_tag: proc_obsd_315
+proc_prem_q16_tag: proc_prem_16
+proc_obsd_3D_crust_18_tag: proc_obsd_318
+proc_obsd_3D_crust_1_tag: proc_obsd_31
+
